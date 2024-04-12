@@ -69,8 +69,8 @@ public final class Js5GlTextureProvider implements TextureProvider {
 			this.solidColorSprites = null;
 		}
 
-		@Pc(51) Buffer local51 = new Buffer(arg1.fetchFile(0, 0));
-		@Pc(55) int local55 = local51.g2();
+		@Pc(51) Buffer buffer = new Buffer(arg1.fetchFile(0, 0));
+		@Pc(55) int local55 = buffer.g2();
 		this.aByteArray61 = new byte[local55];
 		this.aByteArray60 = new byte[local55];
 		this.aByteArray59 = new byte[local55];
@@ -83,51 +83,51 @@ public final class Js5GlTextureProvider implements TextureProvider {
 		this.aBooleanArray93 = new boolean[local55];
 		@Pc(97) int local97;
 		for (local97 = 0; local97 < local55; local97++) {
-			this.aBooleanArray92[local97] = local51.g1() == 1;
+			this.aBooleanArray92[local97] = buffer.g1() == 1;
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aBooleanArray90[local97] = local51.g1() == 1;
+				this.aBooleanArray90[local97] = buffer.g1() == 1;
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aBooleanArray91[local97] = local51.g1() == 1;
+				this.aBooleanArray91[local97] = buffer.g1() == 1;
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aBooleanArray89[local97] = local51.g1() == 1;
+				this.aBooleanArray89[local97] = buffer.g1() == 1;
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aBooleanArray93[local97] = local51.g1() == 1;
+				this.aBooleanArray93[local97] = buffer.g1() == 1;
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aByteArray59[local97] = local51.g1b();
+				this.aByteArray59[local97] = buffer.g1b();
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aByteArray60[local97] = local51.g1b();
+				this.aByteArray60[local97] = buffer.g1b();
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aByteArray62[local97] = local51.g1b();
+				this.aByteArray62[local97] = buffer.g1b();
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aByteArray61[local97] = local51.g1b();
+				this.aByteArray61[local97] = buffer.g1b();
 			}
 		}
 		for (local97 = 0; local97 < local55; local97++) {
 			if (this.aBooleanArray92[local97]) {
-				this.aShortArray59[local97] = (short) local51.g2();
+				this.aShortArray59[local97] = (short) buffer.g2();
 			}
 		}
 	}

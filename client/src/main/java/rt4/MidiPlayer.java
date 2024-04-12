@@ -157,11 +157,11 @@ public class MidiPlayer {
 	}
 
 	@OriginalMember(owner = "client!sj", name = "c", descriptor = "(II)V")
-	public static void method3956(@OriginalArg(0) int arg0) {
+	public static void setVolume(@OriginalArg(0) int newVolume) {
 		if (state == 0) {
-			stream.setVolume(arg0);
+			stream.setVolume(newVolume);
 		} else {
-			volume = arg0;
+			volume = newVolume;
 		}
 	}
 }

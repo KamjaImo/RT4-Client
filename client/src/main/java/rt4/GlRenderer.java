@@ -129,7 +129,7 @@ public final class GlRenderer {
 	private static JagString method4147(@OriginalArg(0) String arg0) {
 		@Pc(3) byte[] local3;
 		local3 = arg0.getBytes(StandardCharsets.ISO_8859_1);
-		return JagString.decodeString(local3, local3.length, 0);
+		return JagString.toJagString(local3, local3.length, 0);
 	}
 
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(IIII)V")

@@ -1820,7 +1820,7 @@ public class Protocol {
 			}
 			@Pc(3848) byte[] data = new byte[length];
 			inboundBuffer.gBytesIsaac(data, length);
-			JagString url = JagString.decodeString(data, length, 0);
+			JagString url = JagString.toJagString(data, length, 0);
 			if (GameShell.frame == null && (SignLink.anInt5928 == 3 || !SignLink.osName.startsWith("win") || client.haveIe6)) {
 				ScriptRunner.openUrl(url, true);
 			} else {
@@ -3322,7 +3322,7 @@ public class Protocol {
 			}
 			@Pc(15) byte[] local15 = new byte[local7];
 			arg0.offset += WordPack.codec.decode(0, local7, local15, arg0.data, arg0.offset);
-			return JagString.decodeString(local15, local7, 0);
+			return JagString.toJagString(local15, local7, 0);
 		} catch (@Pc(47) Exception local47) {
 			return WordPack.CABBAGE;
 		}

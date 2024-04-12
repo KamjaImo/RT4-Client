@@ -222,49 +222,49 @@ public abstract class GameShell extends Applet implements Runnable, FocusListene
 		if (InterfaceList.topLevelInterface != -1) {
 			InterfaceList.method3712(true);
 		}
-		method2704();
+		drawMargins();
 	}
 
 	@OriginalMember(owner = "client!l", name = "b", descriptor = "(I)V")
-	public static void method2704() {
-		@Pc(7) int local7 = topMargin;
-		@Pc(9) int local9 = leftMargin;
-		@Pc(16) int local16 = frameHeight - canvasHeight - local7;
-		@Pc(23) int local23 = frameWidth - local9 - canvasWidth;
-		if (local9 <= 0 && local23 <= 0 && local7 <= 0 && local16 <= 0) {
+	public static void drawMargins() {
+		@Pc(16) int bottomMargin = frameHeight - canvasHeight - topMargin;
+		@Pc(23) int rightMargin = frameWidth - leftMargin - canvasWidth;
+		if (leftMargin <= 0 && rightMargin <= 0 && topMargin <= 0 && bottomMargin <= 0) {
 			return;
 		}
 		try {
-			@Pc(46) Container local46;
+			@Pc(46) Container currentFrame;
 			if (fullScreenFrame != null) {
-				local46 = fullScreenFrame;
+				currentFrame = fullScreenFrame;
 			} else if (frame == null) {
-				local46 = signLink.applet;
+				currentFrame = signLink.applet;
 			} else {
-				local46 = frame;
+				currentFrame = frame;
 			}
-			@Pc(59) int local59 = 0;
-			@Pc(61) int local61 = 0;
-			if (frame == local46) {
-				@Pc(68) Insets local68 = frame.getInsets();
-				local61 = local68.left;
-				local59 = local68.top;
+			@Pc(59) int frameY = 0;
+			@Pc(61) int frameX = 0;
+			if (frame == currentFrame) {
+				@Pc(68) Insets currentFrameInsets = frame.getInsets();
+				frameX = currentFrameInsets.left;
+				frameY = currentFrameInsets.top;
 			}
-			@Pc(77) Graphics local77 = local46.getGraphics();
-			local77.setColor(Color.black);
-			if (local9 > 0) {
-				local77.fillRect(local61, local59, local9, frameHeight);
+
+			// Fill in margins between frame and canvas with black
+			@Pc(77) Graphics currentFrameGraphics = currentFrame.getGraphics();
+			currentFrameGraphics.setColor(Color.black);
+			if (leftMargin > 0) {
+				currentFrameGraphics.fillRect(frameX, frameY, leftMargin, frameHeight);
 			}
-			if (local7 > 0) {
-				local77.fillRect(local61, local59, frameWidth, local7);
+			if (topMargin > 0) {
+				currentFrameGraphics.fillRect(frameX, frameY, frameWidth, topMargin);
 			}
-			if (local23 > 0) {
-				local77.fillRect(local61 + frameWidth - local23, local59, local23, frameHeight);
+			if (rightMargin > 0) {
+				currentFrameGraphics.fillRect(frameX + frameWidth - rightMargin, frameY, rightMargin, frameHeight);
 			}
-			if (local16 > 0) {
-				local77.fillRect(local61, local59 + frameHeight - local16, frameWidth, local16);
+			if (bottomMargin > 0) {
+				currentFrameGraphics.fillRect(frameX, frameY + frameHeight - bottomMargin, frameWidth, bottomMargin);
 			}
-		} catch (@Pc(132) Exception local132) {
+		} catch (@Pc(132) Exception ex) {
 		}
 	}
 
@@ -565,6 +565,7 @@ public abstract class GameShell extends Applet implements Runnable, FocusListene
 	@Override
 	public final void run() {
 		try {
+			// Java version validation
 			if (SignLink.javaVendor != null) {
 				@Pc(12) String javaVendor = SignLink.javaVendor.toLowerCase();
 				if (javaVendor.contains("sun") || javaVendor.contains("apple")) {
@@ -605,11 +606,14 @@ public abstract class GameShell extends Applet implements Runnable, FocusListene
 				}
 			}
 			getMaxMemory();
+
+			// Initialization
 			this.addCanvas();
 			SoftwareRaster.frameBuffer = FrameBuffer.create(canvasHeight, canvasWidth, canvas);
 			this.mainInit();
-			timer = Timer.create();
 
+			// Establish game loop timer
+			timer = Timer.create();
 			long lastUpdateTime = 0;
 			long lastDrawTime = 0;
 			while (killTime == 0L) {
@@ -619,6 +623,7 @@ public abstract class GameShell extends Applet implements Runnable, FocusListene
 
 				long currentTime = System.nanoTime();
 
+				// Game logic loop
 				updateDelta = currentTime - lastUpdateTime;
 				if (updateDelta >= FIXED_UPDATE_RATE_NS) {
 					logicCycles = timer.count(minimumDelay, (int) FIXED_UPDATE_RATE);
@@ -629,6 +634,7 @@ public abstract class GameShell extends Applet implements Runnable, FocusListene
 					flush(signLink, canvas);
 				}
 
+				// Render loop (also handles inputs)
 				renderDelta = currentTime - lastDrawTime;
 				if (renderDelta >= VARIABLE_RENDER_RATE_NS) {
 					this.mainInputLoop();

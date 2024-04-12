@@ -44,19 +44,19 @@ public final class ScriptRunner {
 	@OriginalMember(owner = "client!fe", name = "I", descriptor = "Lclient!na;")
 	public static final JagString aClass100_639 = JagString.parse(" ");
 	@OriginalMember(owner = "client!dc", name = "M", descriptor = "Lclient!na;")
-	public static final JagString aClass100_268 = JagString.parse(")4");
+	public static final JagString FORWARD_SLASH = JagString.parse(")4");
 	@OriginalMember(owner = "client!he", name = "gb", descriptor = "Lclient!na;")
-	public static final JagString aClass100_518 = JagString.parse("www");
+	public static final JagString WWW = JagString.parse("www");
 	@OriginalMember(owner = "client!e", name = "Tc", descriptor = "Lclient!na;")
-	public static final JagString aClass100_365 = JagString.parse("www)2wtqa");
+	public static final JagString WWW_WTQA = JagString.parse("www)2wtqa");
 	@OriginalMember(owner = "client!lk", name = "J", descriptor = "Lclient!na;")
-	public static final JagString aClass100_687 = JagString.parse(")4p=");
+	public static final JagString SETTINGS_URL_PARAM = JagString.parse(")4p=");
 	@OriginalMember(owner = "client!en", name = "x", descriptor = "Lclient!na;")
-	public static final JagString aClass100_424 = JagString.parse("http:)4)4");
+	public static final JagString HTTP_SCHEMA = JagString.parse("http:)4)4");
 	@OriginalMember(owner = "client!gf", name = "I", descriptor = "Lclient!na;")
-	public static final JagString aClass100_886 = JagString.parse(")3runescape)3com)4l=");
+	public static final JagString RUNESCAPE_DOT_COM_WITH_LANGUAGE_URL_PARAM = JagString.parse(")3runescape)3com)4l=");
 	@OriginalMember(owner = "client!v", name = "a", descriptor = "Lclient!na;")
-	public static final JagString aClass100_98 = JagString.parse(")4a=");
+	public static final JagString AFFILIATE_URL_PARAM = JagString.parse(")4a=");
 	@OriginalMember(owner = "client!ch", name = "C", descriptor = "[[I")
 	public static final int[][] anIntArrayArray6 = new int[104][104];
 	@OriginalMember(owner = "client!n", name = "e", descriptor = "Lclient!na;")
@@ -78,7 +78,7 @@ public final class ScriptRunner {
 	@OriginalMember(owner = "client!rh", name = "a", descriptor = "[I")
 	public static int[] intLocals;
 	@OriginalMember(owner = "client!km", name = "ad", descriptor = "I")
-	public static int fp = 0;
+	public static int csp = 0;
 	@OriginalMember(owner = "client!od", name = "g", descriptor = "S")
 	public static short aShort25 = 256;
 	@OriginalMember(owner = "client!an", name = "db", descriptor = "S")
@@ -1271,8 +1271,8 @@ public final class ScriptRunner {
 	}
 
 	@OriginalMember(owner = "client!ed", name = "b", descriptor = "(II)Lclient!ba;")
-	public static World getWorld(@OriginalArg(1) int arg0) {
-		return WorldList.loaded && arg0 >= WorldList.minId && arg0 <= WorldList.maxId ? WorldList.worlds[arg0 - WorldList.minId] : null;
+	public static World getWorld(@OriginalArg(1) int worldIdx) {
+		return WorldList.loaded && worldIdx >= WorldList.minId && worldIdx <= WorldList.maxId ? WorldList.worlds[worldIdx - WorldList.minId] : null;
 	}
 
 	@OriginalMember(owner = "client!sc", name = "a", descriptor = "()V")
@@ -1287,15 +1287,23 @@ public final class ScriptRunner {
 
 	@OriginalMember(owner = "client!be", name = "a", descriptor = "(Z)Lclient!na;")
 	public static JagString method479() {
-		@Pc(8) JagString local8 = aClass100_518;
-		@Pc(10) JagString local10 = JagString.EMPTY;
-		if (client.modeWhere != 0) {
-			local8 = aClass100_365;
+		@Pc(8) JagString wwwUrlPart = WWW;
+		@Pc(10) JagString settingsUrlParam = JagString.EMPTY;
+		if (client.runEnv != client.RunEnvs.prod) {
+			wwwUrlPart = WWW_WTQA;
 		}
 		if (client.settings != null) {
-			local10 = JagString.concatenate(new JagString[]{aClass100_687, client.settings});
+			settingsUrlParam = JagString.concatenate(new JagString[]{SETTINGS_URL_PARAM, client.settings});
 		}
-		return JagString.concatenate(new JagString[]{aClass100_424, local8, aClass100_886, JagString.parseInt(client.language), aClass100_98, JagString.parseInt(client.affiliate), local10, aClass100_268});
+
+		// http://www(-wtqa).runescape.com/l=<languageId>/a=<affiliateId>(/p=<settings>)/
+		return JagString.concatenate(new JagString[]{
+			HTTP_SCHEMA, 
+			wwwUrlPart, 
+			RUNESCAPE_DOT_COM_WITH_LANGUAGE_URL_PARAM, JagString.parseInt(client.language), 
+			AFFILIATE_URL_PARAM, JagString.parseInt(client.affiliate), 
+			settingsUrlParam, 
+			FORWARD_SLASH});
 	}
 
 	@OriginalMember(owner = "client!ol", name = "a", descriptor = "(IIIILclient!th;IJIIII)Z")
@@ -1305,9 +1313,9 @@ public final class ScriptRunner {
 
 	@OriginalMember(owner = "client!vl", name = "a", descriptor = "(I)Z")
 	public static boolean isShowingVideoAd() {
-		if (client.objectTag) {
+		if (client.javaScript) {
 			try {
-				return !((Boolean) aClass100_588.browserControlCall(GameShell.signLink.applet));
+				return !((Boolean) aClass100_588.callInBrowserAsJavascriptFunction(GameShell.signLink.applet));
 			} catch (@Pc(21) Throwable local21) {
 			}
 		}
@@ -1592,6 +1600,9 @@ public final class ScriptRunner {
 		public static final int setChatSettings = 5001;
 		public static final int getPrivateChatSetting = 5005;
 
+		// Volume
+		public static final int setVolume = 6019;
+
 		// Ads
 		public static final int canShowVideoAd = 6405;
 		public static final int isShowingVideoAd = 6406;
@@ -1821,30 +1832,50 @@ public final class ScriptRunner {
 
 	@OriginalMember(owner = "client!h", name = "a", descriptor = "(BILclient!jl;)V")
 	public static void run(@OriginalArg(1) int maxCycles, @OriginalArg(2) HookRequest request) {
-		@Pc(4) Object[] local4 = request.arguments;
-		@Pc(10) int sid = (Integer) local4[0];
-		@Pc(14) ClientScript script = ClientScriptList.get(sid);
+		// request.arguments contains a set of intermingled ints and strings pulled from a cache file.
+		@Pc(4) Object[] requestArgs = request.arguments;
+
+		// The first int in the arguments corresponds to the id of a client script.
+		@Pc(10) int scriptId = (Integer) requestArgs[0];
+		@Pc(14) ClientScript script = ClientScriptList.get(scriptId);
 		if (script == null) {
 			return;
 		}
-		fp = 0;
-		@Pc(26) int ssp = 0;
-		@Pc(28) int isp = 0;
-		@Pc(30) int pc = -1;
-		@Pc(33) int[] intOperands = script.intOperands;
+
+		// The client script contains three sets of opcodes/operands,
+		// which are all indexed by one pointer (pc).
 		@Pc(36) int[] opcodes = script.opcodes;
+		@Pc(33) int[] intOperands = script.intOperands;
+		JagString[] stringOperands = script.stringOperands;
+		@Pc(30) int pc = -1;
+
+		// Set up pointers for the different stacks managed in this process.
+		csp = 0; // call stack
+		@Pc(26) int ssp = 0; // string stack
+		@Pc(28) int isp = 0; // int stack
+
 		@Pc(44) byte op = -1;
+		
+		// Keep track of how many cycles of the game loop have been run.
 		@Pc(58) int cycles;
+
 		try {
+			// Each client script has two stacks of local variables,
+			// one for ints and one for strings.
 			intLocals = new int[script.intLocals];
 			@Pc(50) int intLocalIndex = 0;
 			stringLocals = new JagString[script.stringLocals];
 			@Pc(56) int stringLocalIndex = 0;
 			@Pc(77) int id;
 			@Pc(194) JagString value;
-			for (cycles = 1; cycles < local4.length; cycles++) {
-				if (local4[cycles] instanceof Integer) {
-					id = (Integer) local4[cycles];
+
+			// Iterate each subsequent item in request.arguments.
+			// The meaning of the argument depends on its type and value.
+			for (cycles = 1; cycles < requestArgs.length; cycles++) {
+				// Int values correspond to specific properties on the request object,
+				// such as mouse position or key presses.
+ 				if (requestArgs[cycles] instanceof Integer) {
+					id = (Integer) requestArgs[cycles];
 					if (id == 0x80000001) {
 						id = request.mouseX;
 					}
@@ -1873,8 +1904,8 @@ public final class ScriptRunner {
 						id = request.keyChar;
 					}
 					intLocals[intLocalIndex++] = id;
-				} else if (local4[cycles] instanceof JagString) {
-					value = (JagString) local4[cycles];
+				} else if (requestArgs[cycles] instanceof JagString) {
+					value = (JagString) requestArgs[cycles];
 					if (value.strEquals(EVENT_OPBASE)) {
 						value = request.opBase;
 					}
@@ -1947,10 +1978,10 @@ public final class ScriptRunner {
 						continue;
 					}
 					if (opcode == 21) {
-						if (fp == 0) {
+						if (csp == 0) {
 							return;
 						}
-						@Pc(423) GoSubFrame frame = callStack[--fp];
+						@Pc(423) GoSubFrame frame = callStack[--csp];
 						script = frame.script;
 						intLocals = frame.intLocals;
 						opcodes = script.opcodes;
@@ -2008,7 +2039,7 @@ public final class ScriptRunner {
 					if (opcode == 37) {
 						id = intOperands[pc];
 						ssp -= id;
-						string = JagString.method2355(ssp, id, stringStack);
+						string = JagString.concatenate(ssp, id, stringStack);
 						stringStack[ssp++] = string;
 						continue;
 					}
@@ -2038,12 +2069,12 @@ public final class ScriptRunner {
 						local705.intLocals = intLocals;
 						local705.pc = pc;
 						local705.script = script;
-						if (fp >= callStack.length) {
+						if (csp >= callStack.length) {
 							throw new RuntimeException();
 						}
 						script = local642;
 						pc = -1;
-						callStack[fp++] = local705;
+						callStack[csp++] = local705;
 						intLocals = local646;
 						intOperands = local642.intOperands;
 						opcodes = local642.opcodes;
@@ -4756,7 +4787,7 @@ public final class ScriptRunner {
 															string = JagString.formatIp(Player.lastLogAddress.intArg2);
 															if (Player.lastLogAddress.result != null) {
 																@Pc(8281) byte[] local8281 = ((String) Player.lastLogAddress.result).getBytes(StandardCharsets.ISO_8859_1);
-																string = JagString.decodeString(local8281, local8281.length, 0);
+																string = JagString.toJagString(local8281, local8281.length, 0);
 															}
 														}
 														stringStack[ssp++] = string;
@@ -5179,26 +5210,26 @@ public final class ScriptRunner {
 														Preferences.sentToServer = false;
 														continue;
 													}
-													if (opcode == 6019) {
+													if (opcode == Cs2Opcodes.setVolume) {
 														isp--;
-														int1 = intStack[isp];
-														if (int1 < 0) {
-															int1 = 0;
+														int newVolume = intStack[isp];
+														if (newVolume < 0) {
+															newVolume = 0;
 														}
-														if (int1 > 255) {
-															int1 = 255;
+														if (newVolume > 255) {
+															newVolume = 255;
 														}
-														if (int1 != Preferences.musicVolume) {
+														if (newVolume != Preferences.musicVolume) {
 															if (Preferences.musicVolume == 0 && MusicPlayer.groupId != -1) {
-																MidiPlayer.playImmediate(client.js5Archive6, MusicPlayer.groupId, int1);
+																MidiPlayer.playImmediate(client.js5Archive6, MusicPlayer.groupId, newVolume);
 																MidiPlayer.jingle = false;
-															} else if (int1 == 0) {
+															} else if (newVolume == 0) {
 																MidiPlayer.method4548();
 																MidiPlayer.jingle = false;
 															} else {
-																MidiPlayer.method3956(int1);
+																MidiPlayer.setVolume(newVolume);
 															}
-															Preferences.musicVolume = int1;
+															Preferences.musicVolume = newVolume;
 														}
 														Preferences.write(GameShell.signLink);
 														Preferences.sentToServer = false;
@@ -5915,21 +5946,21 @@ public final class ScriptRunner {
 			}
 		} catch (@Pc(14378) Exception ex) {
 			if (script.name == null) {
-				if (client.modeWhere != 0) {
+				if (client.runEnv != client.RunEnvs.prod) {
 					Chat.add(EMPTY_STRING, 0, CS_ERROR);
 				}
 				TracingException.report("CS2 - scr:" + script.key + " op:" + op, ex);
 			} else {
 				@Pc(14385) JagString str = JagString.allocate(30);
 				str.method3113(aClass100_928).method3113(script.name);
-				for (cycles = fp - 1; cycles >= 0; cycles--) {
+				for (cycles = csp - 1; cycles >= 0; cycles--) {
 					str.method3113(aClass100_253).method3113(callStack[cycles].script.name);
 				}
 				if (op == 40) {
 					cycles = intOperands[pc];
 					str.method3113(aClass100_802).method3113(JagString.parseInt(cycles));
 				}
-				if (client.modeWhere != 0) {
+				if (client.runEnv != client.RunEnvs.prod) {
 					Chat.add(EMPTY_STRING, 0, JagString.concatenate(new JagString[]{aClass100_780, script.name}));
 				}
 				TracingException.report("CS2 - scr:" + script.key + " op:" + op + new String(str.method3148()), ex);

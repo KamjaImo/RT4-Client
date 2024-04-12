@@ -58,18 +58,22 @@ public final class TextureOpTexture extends TextureOp {
 
 	@OriginalMember(owner = "client!ui", name = "a", descriptor = "(Z)Z")
 	private boolean loadTexture() {
+		// Do nothing if texture already loaded
 		if (this.pixels != null) {
 			return true;
-		} else if (this.textureId < 0) {
+		} 
+		
+		// Do nothing if texture invalid
+		else if (this.textureId < 0) {
 			return false;
-		} else {
-			@Pc(22) int local22 = Texture.width;
-			@Pc(24) int local24 = Texture.height;
+		} 
+		
+		else {
 			@Pc(34) int local34 = Texture.provider.isLowDetail(this.textureId) ? 64 : 128;
 			this.pixels = Texture.provider.getPixels(this.textureId);
 			this.height = local34;
 			this.width = local34;
-			Texture.setSize(local24, local22);
+			Texture.setSize(Texture.height, Texture.width);
 			return this.pixels != null;
 		}
 	}

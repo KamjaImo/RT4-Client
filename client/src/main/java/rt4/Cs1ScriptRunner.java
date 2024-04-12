@@ -238,7 +238,7 @@ public class Cs1ScriptRunner {
 														local246 = JagString.formatIp(Player.lastLogAddress.intArg2);
 														if (Player.lastLogAddress.result != null) {
 															@Pc(265) byte[] local265 = ((String) Player.lastLogAddress.result).getBytes(StandardCharsets.ISO_8859_1);
-															local246 = JagString.decodeString(local265, local265.length, 0);
+															local246 = JagString.toJagString(local265, local265.length, 0);
 														}
 													}
 													text = JagString.concatenate(new JagString[]{text.substring(local14, 0), local246, text.substring(local14 + 4)});

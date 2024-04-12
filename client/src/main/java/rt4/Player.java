@@ -417,7 +417,7 @@ public final class Player extends PathingEntity {
 			method501();
 		}
 		@Pc(102) int local102;
-		if (client.modeWhat != 0 && local79 < 50) {
+		if (client.runMode != client.RunModes.live && local79 < 50) {
 			local102 = 50 - local79;
 			while (anInt2863 < local102) {
 				aByteArrayArray8[anInt2863] = new byte[102400];

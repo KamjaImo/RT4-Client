@@ -200,7 +200,7 @@ public class Cheat {
 				Preferences.write(GameShell.signLink);
 				Preferences.sentToServer = false;
 			}
-			if (arg0.startsWith(COMMAND_FPS) && client.modeWhere != 0) {
+			if (arg0.startsWith(COMMAND_FPS) && client.runEnv != client.RunEnvs.prod) {
 				GameShell.setFpsTarget(arg0.substring(6).parseInt());
 			}
 			if (arg0.equalsIgnoreCase(ERROR_TEST)) {

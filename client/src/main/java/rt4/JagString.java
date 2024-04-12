@@ -17,9 +17,12 @@ public final class JagString implements StringInterface {
 	@OriginalMember(owner = "client!pa", name = "O", descriptor = "Lclient!na;")
 	public static final JagString EMPTY = parse("");
 	@OriginalMember(owner = "client!pi", name = "Q", descriptor = "Lclient!na;")
-	public static final JagString aClass100_853 = parse("null");
+	public static final JagString NULL = parse("null");
+	public static final JagString COMMA = parse(")1");
+	public static final JagString HYPHEN = parse(")2");
 	@OriginalMember(owner = "client!t", name = "C", descriptor = "Lclient!na;")
 	public static final JagString PERIOD = parse(")3");
+	public static final JagString FORWARD_SLASH = parse(")4");
 	@OriginalMember(owner = "client!vk", name = "a", descriptor = "[I")
 	public static final int[] anIntArray471 = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 73, 74, 76, 78, 83, 84, 85, 86, 91, 92, 93, 94, 95, 97, 103, 104, 105, 106, 107, 108, 113, 114, 115, 116, 118, 119, 120, 121, 122, 123, 124, 125, 133, 134, 136, 138, 143, 144, 145, 146, 151, 152, 153, 154, 155, 157, 163, 164, 165, 166, 168, 169, 174, 175, 176, 177, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 97, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 157, 215, 216, 117, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 66, 66, 66, 66, 66, 66, 65, 75, 79, 79, 79, 79, 87, 87, 87, 87, 77, 96, 98, 98, 98, 98, 98, 250, 251, 109, 109, 109, 109, 117, 252, 167, 126, 126, 126, 126, 126, 126, 125, 135, 139, 139, 139, 139, 147, 147, 147, 147, 137, 156, 158, 158, 158, 158, 158, 253, 254, 170, 170, 170, 170, 178, 255, 178};
 	@OriginalMember(owner = "client!sh", name = "e", descriptor = "Lclient!na;")
@@ -68,76 +71,92 @@ public final class JagString implements StringInterface {
 		if (arg0.length < 2) {
 			throw new IllegalArgumentException();
 		}
-		return method2355(0, arg0.length, arg0);
+		return concatenate(0, arg0.length, arg0);
 	}
 
 	@OriginalMember(owner = "client!jd", name = "a", descriptor = "(II[Lclient!na;I)Lclient!na;")
-	public static JagString method2355(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) JagString[] arg2) {
-		@Pc(5) int local5 = 0;
-		for (@Pc(7) int local7 = 0; local7 < arg1; local7++) {
-			if (arg2[arg0 + local7] == null) {
-				arg2[local7 + arg0] = aClass100_853;
+	public static JagString concatenate(@OriginalArg(0) int startIdx, @OriginalArg(1) int length, @OriginalArg(2) JagString[] strings) {
+		// Count total length of strings to concat + handle null values
+		@Pc(5) int finalLength = 0;
+		for (@Pc(7) int i = 0; i < length; i++) {
+			if (strings[startIdx + i] == null) {
+				strings[i + startIdx] = NULL;
 			}
-			local5 += arg2[local7 + arg0].length;
+			finalLength += strings[i + startIdx].length;
 		}
-		@Pc(39) byte[] local39 = new byte[local5];
-		@Pc(41) int local41 = 0;
-		for (@Pc(43) int local43 = 0; local43 < arg1; local43++) {
-			@Pc(52) JagString local52 = arg2[local43 + arg0];
-			copy(local52.chars, 0, local39, local41, local52.length);
-			local41 += local52.length;
+
+		// Copy each string one after another to a new byte array
+		@Pc(39) byte[] finalString = new byte[finalLength];
+		@Pc(41) int destIdx = 0;
+		for (@Pc(43) int i = 0; i < length; i++) {
+			@Pc(52) JagString currentString = strings[i + startIdx];
+			copy(currentString.chars, 0, finalString, destIdx, currentString.length); 
+			destIdx += currentString.length;
 		}
-		@Pc(71) JagString local71 = new JagString();
-		local71.length = local5;
-		local71.chars = local39;
-		return local71;
+
+		// Convert byte array to JagString
+		@Pc(71) JagString result = new JagString();
+		result.length = finalLength;
+		result.chars = finalString;
+		return result;
 	}
 
 	@OriginalMember(owner = "client!kg", name = "a", descriptor = "([BI[BII)V")
-	public static void copy(@OriginalArg(0) byte[] arg0, @OriginalArg(1) int arg1, @OriginalArg(2) byte[] arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4) {
-		@Pc(15) int local15;
-		if (arg0 == arg2) {
-			if (arg1 == arg3) {
+	public static void copy(@OriginalArg(0) byte[] source, @OriginalArg(1) int sourceIdx, @OriginalArg(2) byte[] dest, @OriginalArg(3) int destIdx, @OriginalArg(4) int lengthToCopy) {
+		@Pc(15) int finalIdx;
+
+		// Special behavior if copying to self
+		if (source == dest) {
+			// If copying to self at same index, then already same, so done
+			if (sourceIdx == destIdx) {
 				return;
 			}
-			if (arg3 > arg1 && arg3 < arg1 + arg4) {
-				local15 = arg4 - 1;
-				@Pc(19) int local19 = arg1 + local15;
-				@Pc(23) int local23 = arg3 + local15;
-				local15 = local19 - local15;
-				local15 += 7;
-				while (local19 >= local15) {
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
-					arg2[local23--] = arg0[local19--];
+
+			// If moving forward by less than the amount of data to move,
+			// then copy source to dest from right to left (to avoid overwriting data).
+			// This is done 8 bytes at a time - I think the intent was loop unrolling,
+			// but in this particular case I'm skeptical of the performance gained by doing this.
+			if (destIdx > sourceIdx && destIdx < sourceIdx + lengthToCopy) {
+				finalIdx = lengthToCopy - 1;
+				@Pc(19) int currentIdxSrc = sourceIdx + finalIdx;
+				@Pc(23) int currentIdxDest = destIdx + finalIdx;
+				finalIdx = currentIdxSrc - finalIdx;
+				finalIdx += 7;
+				while (currentIdxSrc >= finalIdx) {
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
+					dest[currentIdxDest--] = source[currentIdxSrc--];
 				}
-				local15 -= 7;
-				while (local19 >= local15) {
-					arg2[local23--] = arg0[local19--];
+				finalIdx -= 7;
+				while (currentIdxSrc >= finalIdx) {
+					dest[currentIdxDest--] = source[currentIdxSrc--];
 				}
 				return;
 			}
 		}
-		local15 = arg4 + arg1;
-		@Pc(115) int local115 = local15 - 7;
-		while (arg1 < local115) {
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
-			arg2[arg3++] = arg0[arg1++];
+
+		// In all other cases, it is safe to copy bytes left to right.
+		// Once again this is done 8 bytes at a time.
+		finalIdx = lengthToCopy + sourceIdx;
+		@Pc(115) int finalIdx2 = finalIdx - 7;
+		while (sourceIdx < finalIdx2) {
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
+			dest[destIdx++] = source[sourceIdx++];
 		}
-		local15 = local115 + 7;
-		while (arg1 < local15) {
-			arg2[arg3++] = arg0[arg1++];
+		finalIdx = finalIdx2 + 7;
+		while (sourceIdx < finalIdx) {
+			dest[destIdx++] = source[sourceIdx++];
 		}
 	}
 
@@ -205,16 +224,16 @@ public final class JagString implements StringInterface {
 	}
 
 	@OriginalMember(owner = "client!an", name = "a", descriptor = "([BIII)Lclient!na;")
-	public static JagString decodeString(@OriginalArg(0) byte[] arg0, @OriginalArg(2) int arg1, @OriginalArg(3) int arg2) {
-		@Pc(7) JagString local7 = new JagString();
-		local7.chars = new byte[arg1];
-		local7.length = 0;
-		for (@Pc(22) int local22 = arg2; local22 < arg1 + arg2; local22++) {
-			if (arg0[local22] != 0) {
-				local7.chars[local7.length++] = arg0[local22];
+	public static JagString toJagString(@OriginalArg(0) byte[] encodedBytes, @OriginalArg(2) int length, @OriginalArg(3) int offset) {
+		@Pc(7) JagString result = new JagString();
+		result.chars = new byte[length];
+		result.length = 0;
+		for (@Pc(22) int i = offset; i < length + offset; i++) {
+			if (encodedBytes[i] != 0) {
+				result.chars[result.length++] = encodedBytes[i];
 			}
 		}
-		return local7;
+		return result;
 	}
 
 	@OriginalMember(owner = "client!bg", name = "d", descriptor = "(II)Z")
@@ -1044,14 +1063,19 @@ public final class JagString implements StringInterface {
 	}
 
 	@OriginalMember(owner = "client!na", name = "a", descriptor = "(ILjava/applet/Applet;)Ljava/lang/Object;")
-	public final Object browserControlCall(@OriginalArg(1) Applet arg0) throws Throwable {
-		@Pc(12) String local12 = new String(this.chars, 0, this.length);
-		@Pc(17) Object local17 = BrowserControl.call(local12, arg0);
-		if (local17 instanceof String) {
-			@Pc(24) byte[] local24 = ((String) local17).getBytes();
-			local17 = decodeString(local24, local24.length, 0);
+	public final Object callInBrowserAsJavascriptFunction(@OriginalArg(1) Applet applet) throws Throwable {
+		// Execute the text contained within the current JagString as a javascript function in the user's browser.
+		// Note that this is a no-op in the standalone Java client.
+		@Pc(12) String thisAsString = new String(this.chars, 0, this.length);
+		@Pc(17) Object evalResult = BrowserControl.call(thisAsString, applet);
+
+		// If javascript function returns a string result, convert it to a JagString.
+		// This will never execute in the standalone Java client.
+		if (evalResult instanceof String) {
+			@Pc(24) byte[] evalResultBytes = ((String) evalResult).getBytes();
+			evalResult = toJagString(evalResultBytes, evalResultBytes.length, 0);
 		}
-		return local17;
+		return evalResult;
 	}
 
 	@OriginalMember(owner = "client!na", name = "j", descriptor = "(I)J")

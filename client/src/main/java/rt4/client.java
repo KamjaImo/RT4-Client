@@ -26,7 +26,7 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!nh", name = "fb", descriptor = "[I")
 	public static final int[] JS5_ARCHIVE_WEIGHTS = new int[]{4, 4, 1, 2, 6, 4, 2, 49, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	@OriginalMember(owner = "client!si", name = "gb", descriptor = "Lclient!na;")
-	public static final JagString aClass100_974 = JagString.parse("<br>(X");
+	public static final JagString LINE_BREAK = JagString.parse("<br>(X");
 	@OriginalMember(owner = "client!sg", name = "e", descriptor = "Lclient!na;")
 	public static final JagString SETTINGS = JagString.parse("settings");
 	@OriginalMember(owner = "client!km", name = "Mc", descriptor = "Lclient!na;")
@@ -38,31 +38,31 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!nb", name = "n", descriptor = "Lclient!na;")
 	public static final JagString DETAILS = JagString.parse("details");
 	@OriginalMember(owner = "client!qk", name = "b", descriptor = "Lclient!na;")
-	public static final JagString aClass100_900 = JagString.parse("tbrefresh");
+	public static final JagString TB_REFRESH = JagString.parse("tbrefresh");
 	@OriginalMember(owner = "client!al", name = "r", descriptor = "Lclient!na;")
-	public static final JagString aClass100_35 = JagString.parse("showVideoAd");
+	public static final JagString SHOW_VIDEO_AD = JagString.parse("showVideoAd");
 	@OriginalMember(owner = "client!a", name = "e", descriptor = "Lclient!na;")
 	public static final JagString TITLE_SONG = JagString.parse("scape main");
 	@OriginalMember(owner = "client!jm", name = "A", descriptor = "Lclient!na;")
-	static final JagString aClass100_603 = JagString.parse("");
+	static final JagString EMPTY_STRING = JagString.parse("");
 	@OriginalMember(owner = "client!jm", name = "z", descriptor = "Lclient!na;")
-	public static JagString mainLoadSecondaryText = aClass100_603;
+	public static JagString mainLoadSecondaryText = EMPTY_STRING;
 	@OriginalMember(owner = "client!sg", name = "k", descriptor = "Lclient!ve;")
 	public static Js5 js5Archive23;
 	@OriginalMember(owner = "client!pb", name = "Q", descriptor = "I")
 	public static int worldListId = 1;
 	@OriginalMember(owner = "client!gj", name = "b", descriptor = "I")
-	public static int modeWhere = 0;
+	public static int runEnv = RunEnvs.prod;
 	@OriginalMember(owner = "client!gg", name = "U", descriptor = "I")
-	public static int modeWhat = 0;
+	public static int runMode = RunModes.live;
 	@OriginalMember(owner = "client!ud", name = "S", descriptor = "Z")
 	public static boolean advertSuppressed = false;
 	@OriginalMember(owner = "client!lb", name = "v", descriptor = "I")
 	public static int language = 0;
 	@OriginalMember(owner = "client!t", name = "x", descriptor = "Z")
-	public static boolean javaScript = false;
-	@OriginalMember(owner = "client!lk", name = "U", descriptor = "Z")
 	public static boolean objectTag = false;
+	@OriginalMember(owner = "client!lk", name = "U", descriptor = "Z")
+	public static boolean javaScript = false;
 	@OriginalMember(owner = "client!vk", name = "n", descriptor = "I")
 	public static int game = 0;
 	@OriginalMember(owner = "client!wk", name = "w", descriptor = "I")
@@ -214,58 +214,94 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!ah", name = "t", descriptor = "I")
 	public static int anInt986;
 
+	public static class RunModes {
+		public static final int live = 0;
+		public static final int rc = 1;
+		public static final int wip = 2;
+	}
+
+	public static class RunEnvs {
+		public static final int prod = 0;
+		public static final int qa = 1;
+		public static final int decomp = 2;
+	}
+
+	public static class GameStates {
+		public static final int error = 1000;
+	}
+
 	@OriginalMember(owner = "client!client", name = "main", descriptor = "([Ljava/lang/String;)V")
-	public static void main(@OriginalArg(0) String[] arg0) {
+	public static void main(@OriginalArg(0) String[] args) {
+		// Load config file
 		try {
 			GlobalJsonConfig.load(GlobalConfig.EXTENDED_CONFIG_PATH);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+
 		try {
-			if (arg0.length != 4) {
-				arg0 = new String[4];
-				arg0[0] = "1";
-				arg0[1] = "live";
-				arg0[2] = "english";
-				arg0[3] = "game0";
+			// Use default command-line arguments if none provided
+			if (args.length != 4) {
+				args = new String[4];
+				args[0] = "1";
+				args[1] = "live";
+				args[2] = "english";
+				args[3] = "game0";
 				// Static131.method2577("argument count");
 			}
-			@Pc(15) int local15 = -1;
-			worldListId = Integer.parseInt(arg0[0]);
+
+			// Get world from first arg
+			worldListId = Integer.parseInt(args[0]);
 			if (GlobalJsonConfig.instance != null) {
 				worldListId = GlobalJsonConfig.instance.world;
 			}
-			modeWhere = 2;
-			if (arg0[1].equals("live")) {
-				modeWhat = 0;
-			} else if (arg0[1].equals("rc")) {
-				modeWhat = 1;
-			} else if (arg0[1].equals("wip")) {
-				modeWhat = 2;
+
+			// Set runtime environment to decomp so certain production validations won't trigger
+			// (this is needed for client to run properly)
+			runEnv = RunEnvs.decomp;
+		 
+			// Get run mode from second arg
+			if (args[1].equals("live")) {
+				runMode = RunModes.live;
+			} else if (args[1].equals("rc")) {
+				runMode = RunModes.rc;
+			} else if (args[1].equals("wip")) {
+				runMode = RunModes.wip;
 			} else {
 				printUsage("modewhat");
 			}
 			advertSuppressed = false;
+		
+			// Get language from third arg	
+			@Pc(15) int langIdx = -1;
 			try {
-				@Pc(63) byte[] local63 = arg0[2].getBytes(StandardCharsets.ISO_8859_1);
-				local15 = LangUtils.method2053(JagString.decodeString(local63, local63.length, 0));
+				@Pc(63) byte[] argLanguage = args[2].getBytes(StandardCharsets.ISO_8859_1);
+				langIdx = LangUtils.getLanguageIndex(JagString.toJagString(argLanguage, argLanguage.length, 0));
 			} catch (@Pc(74) Exception local74) {
 			}
-			if (local15 != -1) {
-				language = local15;
-			} else if (arg0[2].equals("english")) {
-				language = 0;
-			} else if (arg0[2].equals("german")) {
-				language = 1;
+			if (langIdx != -1) {
+				language = langIdx;
+			} else if (args[2].equals("english")) {
+				language = LangUtils.indexes.EN;
+			} else if (args[2].equals("german")) {
+				language = LangUtils.indexes.DE;
 			} else {
 				printUsage("language");
 			}
 			LocalizedText.setLanguage(language);
-			javaScript = false;
+
+			// Unclear what objectTag does. Seems not to be used for anything.
 			objectTag = false;
-			if (arg0[3].equals("game0")) {
+
+			// This parameter has no function in the standalone Java client,
+			// but originally it served to indicate whether javascript was enabled/disabled
+			// on the user's browser.
+			javaScript = false;
+
+			// Fourth arg toggles some custom plugin settings (I guess for debug purposes)
+			if (args[3].equals("game0")) {
 				game = 0;
-			} else if (arg0[3].equals("game1")) {
+			} else if (args[3].equals("game1")) {
 				game = 1;
 			} else {
 				printUsage("game");
@@ -276,7 +312,7 @@ public final class client extends GameShell {
 			settings = JagString.EMPTY;
 			@Pc(146) client c = new client();
 			instance = c;
-			c.startApplication(modeWhat + 32, "runescape");
+			c.startApplication(runMode + 32, "runescape");
 			GameShell.frame.setLocationRelativeTo(null);
 			GameShell.frame.setSize(1024, 768); // set a reasonable size by default
 		} catch (@Pc(167) Exception ex) {
@@ -425,7 +461,7 @@ public final class client extends GameShell {
 		CursorTypeList.clear();
 		PlayerAppearance.clear();
 		Component.clear();
-		if (modeWhat != 0) {
+		if (runMode != RunModes.live) {
 			for (@Pc(54) int i = 0; i < Player.aByteArrayArray8.length; i++) {
 				Player.aByteArrayArray8[i] = null;
 			}
@@ -681,9 +717,9 @@ public final class client extends GameShell {
 
 	@OriginalMember(owner = "client!jj", name = "a", descriptor = "(Z)V")
 	public static void topBannerRefresh() {
-		if (!advertSuppressed && modeWhere != 2) {
+		if (!advertSuppressed && runEnv != RunEnvs.decomp) {
 			try {
-				aClass100_900.browserControlCall(instance);
+				TB_REFRESH.callInBrowserAsJavascriptFunction(instance);
 			} catch (@Pc(26) Throwable local26) {
 			}
 		}
@@ -691,11 +727,13 @@ public final class client extends GameShell {
 
 	@OriginalMember(owner = "client!gn", name = "a", descriptor = "(Z)Z")
 	public static boolean showVideoAd() {
-		if (objectTag) {
+		// Plays a video ad by calling the showVideoAd() javascript function in browser.
+		// Note that this does nothing in the standalone Java client.
+		if (javaScript) {
 			try {
-				aClass100_35.browserControlCall(signLink.applet);
+				SHOW_VIDEO_AD.callInBrowserAsJavascriptFunction(signLink.applet);
 				return true;
-			} catch (@Pc(14) Throwable local14) {
+			} catch (@Pc(14) Throwable ex) {
 			}
 		}
 		return false;
@@ -704,7 +742,7 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!client", name = "f", descriptor = "(I)V")
 	@Override
 	protected final void mainRedraw() {
-		if (gameState == 1000) {
+		if (gameState == GameStates.error) {
 			return;
 		}
 		@Pc(15) boolean local15 = MidiPlayer.method2699();
@@ -717,17 +755,17 @@ public final class client extends GameShell {
 		@Pc(80) int local80;
 		@Pc(84) int local84;
 		if (GameShell.fullScreenFrame == null) {
-			@Pc(65) Container local65;
+			@Pc(65) Container currentFrame;
 			if (GameShell.fullScreenFrame != null) {
-				local65 = GameShell.fullScreenFrame;
+				currentFrame = GameShell.fullScreenFrame;
 			} else if (GameShell.frame == null) {
-				local65 = GameShell.signLink.applet;
+				currentFrame = GameShell.signLink.applet;
 			} else {
-				local65 = GameShell.frame;
+				currentFrame = GameShell.frame;
 			}
-			local80 = local65.getSize().width;
-			local84 = local65.getSize().height;
-			if (local65 == GameShell.frame) {
+			local80 = currentFrame.getSize().width;
+			local84 = currentFrame.getSize().height;
+			if (currentFrame == GameShell.frame) {
 				@Pc(90) Insets local90 = GameShell.frame.getInsets();
 				local80 -= local90.right + local90.left;
 				local84 -= local90.top + local90.bottom;
@@ -740,13 +778,13 @@ public final class client extends GameShell {
 		if (GameShell.fullScreenFrame != null && !GameShell.focus && (gameState == 30 || gameState == 10)) {
 			DisplayMode.setWindowMode(false, Preferences.favoriteWorlds, -1, -1);
 		}
-		@Pc(158) boolean local158 = false;
+		@Pc(158) boolean isFullRedraw = false;
 		if (GameShell.fullRedraw) {
-			local158 = true;
+			isFullRedraw = true;
 			GameShell.fullRedraw = false;
 		}
-		if (local158) {
-			GameShell.method2704();
+		if (isFullRedraw) {
+			GameShell.drawMargins();
 		}
 		if (GlRenderer.enabled) {
 			for (local80 = 0; local80 < 100; local80++) {
@@ -754,7 +792,7 @@ public final class client extends GameShell {
 			}
 		}
 		if (gameState == 0) {
-			LoadingBarAwt.render(null, local158, mainLoadSecondaryText, mainLoadPercentage);
+			LoadingBarAwt.render(null, isFullRedraw, mainLoadSecondaryText, mainLoadPercentage);
 		} else if (gameState == 5) {
 			LoadingBar.render(false, Fonts.b12Full);
 		} else if (gameState == 10) {
@@ -765,13 +803,13 @@ public final class client extends GameShell {
 					anInt5150 = LoginManager.mapFilesMissingCount;
 				}
 				local80 = (anInt5150 - LoginManager.mapFilesMissingCount) * 50 / anInt5150;
-				Fonts.drawTextOnScreen(false, JagString.concatenate(new JagString[]{LocalizedText.LOADING, aClass100_974, JagString.parseInt(local80), Cs1ScriptRunner.aClass100_80}));
+				Fonts.drawTextOnScreen(false, JagString.concatenate(new JagString[]{LocalizedText.LOADING, LINE_BREAK, JagString.parseInt(local80), Cs1ScriptRunner.aClass100_80}));
 			} else if (LoginManager.loadingScreenState == 2) {
 				if (anInt1196 < LoginManager.anInt5804) {
 					anInt1196 = LoginManager.anInt5804;
 				}
 				local80 = (anInt1196 - LoginManager.anInt5804) * 50 / anInt1196 + 50;
-				Fonts.drawTextOnScreen(false, JagString.concatenate(new JagString[]{LocalizedText.LOADING, aClass100_974, JagString.parseInt(local80), Cs1ScriptRunner.aClass100_80}));
+				Fonts.drawTextOnScreen(false, JagString.concatenate(new JagString[]{LocalizedText.LOADING, LINE_BREAK, JagString.parseInt(local80), Cs1ScriptRunner.aClass100_80}));
 			} else {
 				Fonts.drawTextOnScreen(false, LocalizedText.LOADING);
 			}
@@ -787,7 +825,7 @@ public final class client extends GameShell {
 			}
 		} else {
 			@Pc(388) Graphics local388;
-			if ((gameState == 30 || gameState == 10) && Cheat.rectDebug == 0 && !local158) {
+			if ((gameState == 30 || gameState == 10) && Cheat.rectDebug == 0 && !isFullRedraw) {
 				try {
 					local388 = GameShell.canvas.getGraphics();
 					for (local84 = 0; local84 < InterfaceList.rectangles; local84++) {
@@ -885,13 +923,13 @@ public final class client extends GameShell {
 			return;
 		}
 		worldListId = Integer.parseInt(this.getParameter("worldid"));
-		modeWhere = Integer.parseInt(this.getParameter("modewhere"));
-		if (modeWhere < 0 || modeWhere > 1) {
-			modeWhere = 0;
+		runEnv = Integer.parseInt(this.getParameter("modewhere"));
+		if (runEnv < 0 || runEnv > 2) {
+			runEnv = RunEnvs.prod;
 		}
-		modeWhat = Integer.parseInt(this.getParameter("modewhat"));
-		if (modeWhat < 0 || modeWhat > 2) {
-			modeWhat = 0;
+		runMode = Integer.parseInt(this.getParameter("modewhat"));
+		if (runMode < 0 || runMode > 2) {
+			runMode = RunModes.live;
 		}
 		@Pc(50) String local50 = this.getParameter("advertsuppressed");
 		advertSuppressed = local50 != null && local50.equals("1");
@@ -902,9 +940,9 @@ public final class client extends GameShell {
 		}
 		LocalizedText.setLanguage(language);
 		@Pc(78) String local78 = this.getParameter("objecttag");
-		javaScript = local78 != null && local78.equals("1");
+		objectTag = local78 != null && local78.equals("1");
 		@Pc(94) String local94 = this.getParameter("js");
-		objectTag = local94 != null && local94.equals("1");
+		javaScript = local94 != null && local94.equals("1");
 		@Pc(111) String local111 = this.getParameter("game");
 		if (local111 != null && local111.equals("1")) {
 			game = 1;
@@ -931,7 +969,7 @@ public final class client extends GameShell {
 		@Pc(159) String local159 = this.getParameter("haveie6");
 		haveIe6 = local159 != null && local159.equals("1");
 		instance = this;
-		this.startApplet(modeWhat + 32);
+		this.startApplet(runMode + 32);
 	}
 
 	@OriginalMember(owner = "client!client", name = "g", descriptor = "(I)V")
@@ -941,21 +979,21 @@ public final class client extends GameShell {
 		js5CacheQueue = new Js5CacheQueue();
 		js5NetQueue = new Js5NetQueue();
 
-		if (modeWhat != 0) {
+		if (runMode != RunModes.live) {
 			Player.aByteArrayArray8 = new byte[50][];
 		}
 
 		Preferences.read(GameShell.signLink);
 
-		if (modeWhere == 0) {
+		if (runEnv == RunEnvs.prod) {
 			worldListHostname = GlobalConfig.DEFAULT_HOSTNAME; // this.getCodeBase().getHost();
 			worldListAlternatePort = GlobalConfig.ALTERNATE_PORT + 1;
 			worldListDefaultPort = GlobalConfig.DEFAULT_PORT + 1;
-		} else if (modeWhere == 1) {
+		} else if (runEnv == RunEnvs.qa) {
 			worldListHostname = GlobalConfig.DEFAULT_HOSTNAME; // this.getCodeBase().getHost();
 			worldListAlternatePort = GlobalConfig.ALTERNATE_PORT + worldListId;
 			worldListDefaultPort = GlobalConfig.DEFAULT_PORT + worldListId;
-		} else if (modeWhere == 2) {
+		} else if (runEnv == RunEnvs.decomp) {
 			worldListHostname = GlobalConfig.DEFAULT_HOSTNAME; // "127.0.0.1";
 			worldListAlternatePort = GlobalConfig.ALTERNATE_PORT + worldListId;
 			worldListDefaultPort = GlobalConfig.DEFAULT_PORT + worldListId;
@@ -988,7 +1026,7 @@ public final class client extends GameShell {
 		worldListPort = worldListDefaultPort;
 		aShortArray88 = aShortArray19 = aShortArray74 = aShortArray87 = new short[256];
 		port = worldListPort;
-		if ((SignLink.anInt5928 == 3 && modeWhere != 2) || GlobalConfig.SELECT_DEFAULT_WORLD) {
+		if ((SignLink.anInt5928 == 3 && runEnv != RunEnvs.decomp) || GlobalConfig.SELECT_DEFAULT_WORLD) {
 			Player.worldId = worldListId;
 		}
 
@@ -1021,7 +1059,7 @@ public final class client extends GameShell {
 			masterCache = null;
 		}
 		mainLoadPrimaryText = LocalizedText.GAME0_LOADING;
-		if (modeWhere != 0) {
+		if (runEnv != RunEnvs.prod) {
 			//Cheat.displayFps = true;
 		}
 		PluginRepository.Init();
@@ -1180,12 +1218,12 @@ public final class client extends GameShell {
 			}
 			if (js5NetQueue.errors >= 2 && js5NetQueue.response == 6) {
 				this.error("js5connect_outofdate");
-				gameState = 1000;
+				gameState = GameStates.error;
 				return;
 			}
 			if (js5NetQueue.errors >= 4 && js5NetQueue.response == -1) {
 				this.error("js5crc");
-				gameState = 1000;
+				gameState = GameStates.error;
 				return;
 			}
 			if (js5NetQueue.errors >= 4 && (gameState == 0 || gameState == 5)) {
@@ -1196,7 +1234,7 @@ public final class client extends GameShell {
 				} else {
 					this.error("js5io");
 				}
-				gameState = 1000;
+				gameState = GameStates.error;
 				return;
 			}
 		}
@@ -1538,14 +1576,14 @@ public final class client extends GameShell {
 				mainLoadSecondaryText = LocalizedText.MAINLOAD135;
 			} else if (percentage == 7 || percentage == 9) {
 				this.error("worldlistfull");
-				setGameState(1000);
+				setGameState(GameStates.error);
 			} else if (WorldList.loaded) {
 				mainLoadSecondaryText = LocalizedText.MAINLOAD135B;
 				mainLoadState = 140;
 				mainLoadPercentage = 96;
 			} else {
 				this.error("worldlistio_" + percentage);
-				setGameState(1000);
+				setGameState(GameStates.error);
 			}
 		} else if (mainLoadState == 140) {
 			LoginManager.loginScreenId = js5Archive3.getGroupId(LOGINSCREEN);
@@ -1581,7 +1619,7 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!client", name = "a", descriptor = "(B)V")
 	@Override
 	protected final void mainLoop() {
-		if (gameState == 1000) {
+		if (gameState == GameStates.error) {
 			return;
 		}
 		loop++;

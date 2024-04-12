@@ -5,20 +5,29 @@ import org.openrs2.deob.annotation.OriginalMember;
 
 import java.applet.Applet;
 
+// This class is used to invoke javascript functions arbitrary javascript code
+// when client is run in the browser.
+// Since the client can no longer be played in browser, 
+// it had to be ported to a standalone Java application.
+// As part of that port, all code executed by these methods has been removed or replaced,
+// rendering this class obsolete.
 public final class BrowserControl {
 
 	@OriginalMember(owner = "client!gh", name = "a", descriptor = "(Ljava/lang/String;BLjava/applet/Applet;)Ljava/lang/Object;")
-	public static Object call(@OriginalArg(0) String arg0, @OriginalArg(2) Applet arg1) throws Throwable {
-		return null; // JSObject.getWindow(arg1).call(arg0, (Object[]) null);
+	public static Object call(@OriginalArg(0) String functionName, @OriginalArg(2) Applet applet) throws Throwable {
+		// Originally, this function would call a specified javascript function by name.
+		return null; // JSObject.getWindow(applet).call(functionName, (Object[]) null);
 	}
 
 	@OriginalMember(owner = "client!gh", name = "a", descriptor = "(Ljava/applet/Applet;Ljava/lang/String;[Ljava/lang/Object;B)Ljava/lang/Object;")
-	public static Object call(@OriginalArg(0) Applet arg0, @OriginalArg(1) String arg1, @OriginalArg(2) Object[] arg2) throws Throwable {
-		return null; // JSObject.getWindow(arg0).call(arg1, arg2);
+	public static Object call(@OriginalArg(0) Applet applet, @OriginalArg(1) String functionName, @OriginalArg(2) Object[] args) throws Throwable {
+		// Originally, this function would call a specified javascript function with parameters.
+		return null; // JSObject.getWindow(applet).call(functionName, args);
 	}
 
 	@OriginalMember(owner = "client!gh", name = "a", descriptor = "(Ljava/applet/Applet;ZLjava/lang/String;)V")
-	public static void eval(@OriginalArg(0) Applet arg0, @OriginalArg(2) String arg1) throws Throwable {
-		// JSObject.getWindow(arg0).eval(arg1);
+	public static void eval(@OriginalArg(0) Applet applet, @OriginalArg(2) String js) throws Throwable {
+		// Originally, this function would evaluate a specified arbitrary javascript snippet
+		// JSObject.getWindow(applet).eval(js);
 	}
 }

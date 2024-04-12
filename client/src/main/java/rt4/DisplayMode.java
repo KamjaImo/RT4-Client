@@ -167,7 +167,7 @@ public final class DisplayMode {
 					SoftwareRaster.frameBuffer.draw(local269);
 				} catch (@Pc(277) Exception local277) {
 				}
-				GameShell.method2704();
+				GameShell.drawMargins();
 				if (mode == 0) {
 					SoftwareRaster.frameBuffer = FrameBuffer.create(503, 765, GameShell.canvas);
 				} else {

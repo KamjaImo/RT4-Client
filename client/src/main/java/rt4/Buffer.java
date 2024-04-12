@@ -402,7 +402,7 @@ public class Buffer extends Node {
 	public final JagString gjstr() {
 		@Pc(12) int start = this.offset;
 		while (this.data[this.offset++] != 0) ;
-		return JagString.decodeString(this.data, this.offset - start - 1, start);
+		return JagString.toJagString(this.data, this.offset - start - 1, start);
 	}
 
 	@OriginalMember(owner = "client!wa", name = "h", descriptor = "(I)Lclient!na;")
@@ -413,7 +413,7 @@ public class Buffer extends Node {
 		}
 		@Pc(32) int off = this.offset;
 		while (this.data[this.offset++] != 0) ;
-		return JagString.decodeString(this.data, this.offset - off - 1, off);
+		return JagString.toJagString(this.data, this.offset - off - 1, off);
 	}
 
 	@OriginalMember(owner = "client!wa", name = "f", descriptor = "(B)Lclient!na;")

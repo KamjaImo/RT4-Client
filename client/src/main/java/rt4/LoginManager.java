@@ -514,12 +514,12 @@ public class LoginManager {
 				if (!client.advertSuppressed) {
 					if (playerUnderage && !parentalAdvertConsent || playerMember) {
 						try {
-							ZAP.browserControlCall(GameShell.signLink.applet);
+							ZAP.callInBrowserAsJavascriptFunction(GameShell.signLink.applet);
 						} catch (@Pc(910) Throwable ignored) {
 						}
 					} else {
 						try {
-							UNZAP.browserControlCall(GameShell.signLink.applet);
+							UNZAP.callInBrowserAsJavascriptFunction(GameShell.signLink.applet);
 						} catch (@Pc(920) Throwable ignored) {
 						}
 					}
