@@ -27,11 +27,11 @@ public final class Cache {
 	private final int archive;
 
 	@OriginalMember(owner = "client!ge", name = "<init>", descriptor = "(ILclient!en;Lclient!en;I)V")
-	public Cache(@OriginalArg(0) int arg0, @OriginalArg(1) BufferedFile arg1, @OriginalArg(2) BufferedFile arg2, @OriginalArg(3) int arg3) {
-		this.maxLen = arg3;
-		this.index = arg2;
-		this.archive = arg0;
-		this.data = arg1;
+	public Cache(@OriginalArg(0) int archive, @OriginalArg(1) BufferedFile data, @OriginalArg(2) BufferedFile index, @OriginalArg(3) int maxLen) {
+		this.maxLen = maxLen;
+		this.index = index;
+		this.archive = archive;
+		this.data = data;
 	}
 
 	@OriginalMember(owner = "client!ge", name = "toString", descriptor = "()Ljava/lang/String;")

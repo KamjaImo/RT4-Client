@@ -412,8 +412,8 @@ public class Cs1ScriptRunner {
 								}
 								local270 = ScriptRunner.anInt3751 - local123;
 								local276 = ScriptRunner.anInt1892 - local114;
-								local468 = component.anIntArray37[local276];
-								if (local270 < local468 || local270 > local468 + component.anIntArray45[local276]) {
+								local468 = component.spriteHorizontalOffsets[local276];
+								if (local270 < local468 || local270 > local468 + component.spriteHorizontalLengths[local276]) {
 									continue;
 								}
 								local276 -= component.height / 2;
@@ -1154,12 +1154,12 @@ public class Cs1ScriptRunner {
 					local44.render(arg0, arg1);
 				}
 			} else {
-				SoftwareRaster.method2504(arg0, arg1, arg2.anIntArray37, arg2.anIntArray45);
+				SoftwareRaster.method2504(arg0, arg1, arg2.spriteHorizontalOffsets, arg2.spriteHorizontalLengths);
 			}
 		} else if (GlRenderer.enabled) {
 			((GlSprite) Sprites.compass).renderRotatedTransparent(arg0, arg1, arg2.width, arg2.height, Sprites.compass.width / 2, Sprites.compass.height / 2, (int) Camera.yawTarget, 256, (GlSprite) arg2.method489(false));
 		} else {
-			((SoftwareSprite) Sprites.compass).renderRotated(arg0, arg1, arg2.width, arg2.height, Sprites.compass.width / 2, Sprites.compass.height / 2, (int) Camera.yawTarget, arg2.anIntArray37, arg2.anIntArray45);
+			((SoftwareSprite) Sprites.compass).renderRotated(arg0, arg1, arg2.width, arg2.height, Sprites.compass.width / 2, Sprites.compass.height / 2, (int) Camera.yawTarget, arg2.spriteHorizontalOffsets, arg2.spriteHorizontalLengths);
 		}
 		InterfaceList.rectangleRedraw[arg3] = true;
 	}

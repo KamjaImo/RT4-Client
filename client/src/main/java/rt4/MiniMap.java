@@ -241,7 +241,7 @@ public class MiniMap {
 			if (GlRenderer.enabled) {
 				((GlSprite) sprite).renderRotatedTransparent(arg2, arg1, arg3.width, arg3.height, local57, local67, local48, anInt4130 + 256, (GlSprite) arg3.method489(false));
 			} else {
-				((SoftwareSprite) sprite).renderRotated(arg2, arg1, arg3.width, arg3.height, local57, local67, local48, anInt4130 + 256, arg3.anIntArray37, arg3.anIntArray45);
+				((SoftwareSprite) sprite).renderRotated(arg2, arg1, arg3.width, arg3.height, local57, local67, local48, anInt4130 + 256, arg3.spriteHorizontalOffsets, arg3.spriteHorizontalLengths);
 			}
 			@Pc(146) int local146;
 			@Pc(181) int local181;
@@ -279,7 +279,7 @@ public class MiniMap {
 							if (GlRenderer.enabled) {
 								GlFont.method1188((GlSprite) arg3.method489(false));
 							} else {
-								SoftwareRaster.method2486(arg3.anIntArray37, arg3.anIntArray45);
+								SoftwareRaster.method2486(arg3.spriteHorizontalOffsets, arg3.spriteHorizontalLengths);
 							}
 							local156.renderParagraphAlpha(LoginManager.mapElementList.aClass100Array153[local117], arg2 + local245 + arg3.width / 2, arg1 + arg3.height / 2 + -local200, local239, 50, local271, 0, 1, 0, 0);
 							if (GlRenderer.enabled) {
@@ -406,7 +406,7 @@ public class MiniMap {
 				local1041.render(arg2, arg1);
 			}
 		} else {
-			SoftwareRaster.method2504(arg2, arg1, arg3.anIntArray37, arg3.anIntArray45);
+			SoftwareRaster.method2504(arg2, arg1, arg3.spriteHorizontalOffsets, arg3.spriteHorizontalLengths);
 		}
 		InterfaceList.rectangleRedraw[arg0] = true;
 	}
@@ -431,7 +431,7 @@ public class MiniMap {
 		if (GlRenderer.enabled) {
 			((GlSprite) arg1).method1425(arg0.width / 2 + arg5 + local81 - arg1.anInt1860 / 2, arg0.height / 2 + arg4 - (local92 + arg1.anInt1866 / 2), (GlSprite) arg0.method489(false));
 		} else {
-			((SoftwareSprite) arg1).method312(arg0.width / 2 + arg5 + local81 - arg1.anInt1860 / 2, -(arg1.anInt1866 / 2) + arg0.height / 2 + arg4 + -local92, arg0.anIntArray37, arg0.anIntArray45);
+			((SoftwareSprite) arg1).method312(arg0.width / 2 + arg5 + local81 - arg1.anInt1860 / 2, -(arg1.anInt1866 / 2) + arg0.height / 2 + arg4 + -local92, arg0.spriteHorizontalOffsets, arg0.spriteHorizontalLengths);
 		}
 	}
 

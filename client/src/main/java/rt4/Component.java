@@ -83,8 +83,10 @@ public final class Component {
 	@OriginalMember(owner = "client!be", name = "fb", descriptor = "[Ljava/lang/Object;")
 	public Object[] onDialogAbort;
 
+	// Each item in the array corresponds to a row in a sprite.
+	// Each value is the index of the first renderable pixel in that row.
 	@OriginalMember(owner = "client!be", name = "gb", descriptor = "[I")
-	public int[] anIntArray37;
+	public int[] spriteHorizontalOffsets;
 
 	@OriginalMember(owner = "client!be", name = "kb", descriptor = "[I")
 	public int[] varcTriggers;
@@ -155,8 +157,10 @@ public final class Component {
 	@OriginalMember(owner = "client!be", name = "Nc", descriptor = "[I")
 	public int[] varpTriggers;
 
+	// Each item in the array corresponds to a row in a sprite.
+	// Each value is the number of renderable pixels in that row.
 	@OriginalMember(owner = "client!be", name = "Tc", descriptor = "[I")
-	public int[] anIntArray45;
+	public int[] spriteHorizontalLengths;
 
 	@OriginalMember(owner = "client!be", name = "Xc", descriptor = "[Ljava/lang/Object;")
 	public Object[] onDragStart;
@@ -519,6 +523,9 @@ public final class Component {
 
 	@OriginalMember(owner = "client!be", name = "a", descriptor = "(IIB)V")
 	public final void method477(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1) {
+		// Safely set anIntArray39[arg0] = arg1.
+		// If anIntArray is of insufficient length, pad the end with -1 values before setting.
+		// If anIntArray is null, make a new array of length arg0 with all 0's except arg1 as last value.
 		if (this.anIntArray39 == null || this.anIntArray39.length <= arg0) {
 			@Pc(18) int[] local18 = new int[arg0 + 1];
 			if (this.anIntArray39 != null) {
@@ -537,34 +544,38 @@ public final class Component {
 
 	@OriginalMember(owner = "client!be", name = "a", descriptor = "(I)Z")
 	public final boolean method478() {
-		if (this.anIntArray37 != null) {
+		if (this.spriteHorizontalOffsets != null) {
 			return true;
 		}
-		@Pc(18) SoftwareIndexedSprite local18 = SpriteLoader.loadSoftwareIndexedSprite(this.spriteId, InterfaceList.aClass153_12);
-		if (local18 == null) {
+		@Pc(18) SoftwareIndexedSprite sprite = SpriteLoader.loadSoftwareIndexedSprite(this.spriteId, InterfaceList.aClass153_12);
+		if (sprite == null) {
 			return false;
 		}
-		local18.trim();
-		this.anIntArray37 = new int[local18.height];
-		this.anIntArray45 = new int[local18.height];
-		for (@Pc(37) int local37 = 0; local37 < local18.height; local37++) {
-			@Pc(47) int local47 = 0;
-			@Pc(50) int local50 = local18.width;
-			@Pc(52) int local52;
-			for (local52 = 0; local52 < local18.width; local52++) {
-				if (local18.pixels[local18.width * local37 + local52] != 0) {
-					local47 = local52;
+		sprite.trim();
+		this.spriteHorizontalOffsets = new int[sprite.height];
+		this.spriteHorizontalLengths = new int[sprite.height];
+
+		for (@Pc(37) int currY = 0; currY < sprite.height; currY++) {
+			@Pc(47) int minWidth = 0;
+			@Pc(50) int maxWidth = sprite.width;
+			@Pc(52) int currX;
+
+			// Trim the min and max width of the row of pixels
+			// to only include the part of the image with actual pixel data.
+			for (currX = 0; currX < sprite.width; currX++) {
+				if (sprite.pixels[sprite.width * currY + currX] != 0) {
+					minWidth = currX;
 					break;
 				}
 			}
-			for (local52 = local47; local52 < local18.width; local52++) {
-				if (local18.pixels[local37 * local18.width + local52] == 0) {
-					local50 = local52;
+			for (currX = minWidth; currX < sprite.width; currX++) {
+				if (sprite.pixels[currY * sprite.width + currX] == 0) {
+					maxWidth = currX;
 					break;
 				}
 			}
-			this.anIntArray37[local37] = local47;
-			this.anIntArray45[local37] = local50 - local47;
+			this.spriteHorizontalOffsets[currY] = minWidth;
+			this.spriteHorizontalLengths[currY] = maxWidth - minWidth;
 		}
 		return true;
 	}
