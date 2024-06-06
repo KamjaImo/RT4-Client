@@ -823,8 +823,13 @@ public final class client extends GameShell {
 			for (local80 = 0; local80 < InterfaceList.rectangles; local80++) {
 				InterfaceList.rectangleRedraw[local80] = false;
 			}
-		} else {
+		} 
+		
+		// Load login screen
+		else {
 			@Pc(388) Graphics local388;
+			
+			// Partial redraw if possible, for performance
 			if ((gameState == 30 || gameState == 10) && Cheat.rectDebug == 0 && !isFullRedraw) {
 				try {
 					local388 = GameShell.canvas.getGraphics();
@@ -837,7 +842,10 @@ public final class client extends GameShell {
 				} catch (@Pc(423) Exception local423) {
 					GameShell.canvas.repaint();
 				}
-			} else if (gameState != 0) {
+			} 
+			
+			// Full redraw
+			else if (gameState != 0) {
 				try {
 					local388 = GameShell.canvas.getGraphics();
 					SoftwareRaster.frameBuffer.draw(local388);
