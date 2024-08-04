@@ -407,13 +407,13 @@ public final class client extends GameShell {
 	}
 
 	@OriginalMember(owner = "client!al", name = "a", descriptor = "(ZZZIZ)Lclient!ve;")
-	public static Js5 createJs5(@OriginalArg(0) boolean discardPacked, @OriginalArg(1) boolean arg1, @OriginalArg(2) boolean discardUnpacked, @OriginalArg(3) int archive) {
+	public static Js5 createJs5(@OriginalArg(0) boolean discardPacked, @OriginalArg(1) boolean prefetch, @OriginalArg(2) boolean discardUnpacked, @OriginalArg(3) int archive) {
 		@Pc(7) Cache cache = null;
 		if (cacheData != null) {
 			cache = new Cache(archive, cacheData, cacheIndexes[archive], 1000000);
 		}
 		js5Providers[archive] = js5MasterIndex.getResourceProvider(archive, masterCache, cache);
-		if (arg1) {
+		if (prefetch) {
 			js5Providers[archive].prefetchAll();
 		}
 		return new Js5(js5Providers[archive], discardPacked, discardUnpacked);
@@ -823,8 +823,13 @@ public final class client extends GameShell {
 			for (local80 = 0; local80 < InterfaceList.rectangles; local80++) {
 				InterfaceList.rectangleRedraw[local80] = false;
 			}
-		} else {
+		} 
+		
+		// Load login screen
+		else {
 			@Pc(388) Graphics local388;
+			
+			// Partial redraw if possible, for performance
 			if ((gameState == 30 || gameState == 10) && Cheat.rectDebug == 0 && !isFullRedraw) {
 				try {
 					local388 = GameShell.canvas.getGraphics();
@@ -837,7 +842,10 @@ public final class client extends GameShell {
 				} catch (@Pc(423) Exception local423) {
 					GameShell.canvas.repaint();
 				}
-			} else if (gameState != 0) {
+			} 
+			
+			// Full redraw
+			else if (gameState != 0) {
 				try {
 					local388 = GameShell.canvas.getGraphics();
 					SoftwareRaster.frameBuffer.draw(local388);
@@ -1632,7 +1640,7 @@ public final class client extends GameShell {
 		PluginRepository.Update();
 		this.js5NetworkLoop();
 		if (js5MasterIndex != null) {
-			js5MasterIndex.method179();
+			js5MasterIndex.loop();
 		}
 		MidiPlayer.loop();
 		audioLoop();

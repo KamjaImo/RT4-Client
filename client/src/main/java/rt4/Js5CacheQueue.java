@@ -61,7 +61,7 @@ public final class Js5CacheQueue implements Runnable {
 		request.urgent = false;
 		request.secondaryKey = arg2;
 		request.cache = arg0;
-		request.type = 2;
+		request.type = Js5CacheRequest.Type.Write;
 		this.enqueue(request);
 		return request;
 	}
@@ -70,7 +70,7 @@ public final class Js5CacheQueue implements Runnable {
 	public final Js5CacheRequest read(@OriginalArg(0) int arg0, @OriginalArg(2) Cache arg1) {
 		@Pc(7) Js5CacheRequest local7 = new Js5CacheRequest();
 		local7.cache = arg1;
-		local7.type = 3;
+		local7.type = Js5CacheRequest.Type.Read;
 		local7.urgent = false;
 		local7.secondaryKey = arg0;
 		this.enqueue(local7);
@@ -80,7 +80,7 @@ public final class Js5CacheQueue implements Runnable {
 	@OriginalMember(owner = "client!k", name = "a", descriptor = "(Lclient!ge;BI)Lclient!c;")
 	public final Js5CacheRequest readSynchronous(@OriginalArg(0) Cache arg0, @OriginalArg(2) int arg1) {
 		@Pc(9) Js5CacheRequest local9 = new Js5CacheRequest();
-		local9.type = 1;
+		local9.type = Js5CacheRequest.Type.ReadSynchronous;
 		synchronized (this.queue) {
 			@Pc(31) Js5CacheRequest local31 = (Js5CacheRequest) this.queue.head();
 			while (true) {
@@ -105,10 +105,13 @@ public final class Js5CacheQueue implements Runnable {
 	@Override
 	public final void run() {
 		while (!this.stop) {
-			@Pc(19) Js5CacheRequest local19;
+			// Pull the next request in the queue
+			@Pc(19) Js5CacheRequest currentRequest;
 			synchronized (this.queue) {
-				local19 = (Js5CacheRequest) this.queue.removeHead();
-				if (local19 == null) {
+				currentRequest = (Js5CacheRequest) this.queue.removeHead();
+
+				// If queue is empty, wait
+				if (currentRequest == null) {
 					try {
 						this.queue.wait();
 					} catch (@Pc(35) InterruptedException ignored) {
@@ -118,15 +121,16 @@ public final class Js5CacheQueue implements Runnable {
 				this.size--;
 			}
 			try {
-				if (local19.type == 2) {
-					local19.cache.write((int) local19.secondaryKey, local19.data.length, local19.data);
-				} else if (local19.type == 3) {
-					local19.data = local19.cache.read((int) local19.secondaryKey);
+				// Read from or write to cache, depending on request type
+				if (currentRequest.type == Js5CacheRequest.Type.Write) {
+					currentRequest.cache.write((int) currentRequest.secondaryKey, currentRequest.data.length, currentRequest.data);
+				} else if (currentRequest.type == Js5CacheRequest.Type.Read) {
+					currentRequest.data = currentRequest.cache.read((int) currentRequest.secondaryKey);
 				}
 			} catch (@Pc(83) Exception local83) {
 				TracingException.report(null, local83);
 			}
-			local19.incomplete = false;
+			currentRequest.incomplete = false;
 		}
 	}
 }

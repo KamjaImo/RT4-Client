@@ -305,11 +305,17 @@ public final class Js5 {
 			@Pc(213) int start;
 			if (groupSize > 1) {
 				start = uncompressed.length;
+
+				// Last byte in file indicates number of stripes per file
 				@Pc(216) int position = start - 1;
-				@Pc(220) int stripes = uncompressed[position] & 0xFF;
-				@Pc(228) int bufferPosition = position - groupSize * stripes * 4;
+				@Pc(220) int stripes = uncompressed[position] & 0xFF; 
+				
+				// Jump backwards from end of file to beginning of trailer
+				@Pc(228) int bufferPosition = position - groupSize * stripes * 4; 
 				@Pc(233) Buffer buffer = new Buffer(uncompressed);
 				buffer.offset = bufferPosition;
+
+				// Get the length of each stripe and aggregate them into the total length of each file
 				@Pc(239) int[] lens = new int[groupSize];
 				@Pc(250) int len;
 				@Pc(252) int j;
@@ -320,11 +326,16 @@ public final class Js5 {
 						lens[j] += len;
 					}
 				}
+
+				// Buffer for unpacked data
 				@Pc(282) byte[][] extracted = new byte[groupSize][];
 				for (len = 0; len < groupSize; len++) {
 					extracted[len] = new byte[lens[len]];
 					lens[len] = 0;
 				}
+
+				// Copy each stripe to the unpacked data buffer,
+				// keeping track of which stripe is for which file.
 				buffer.offset = bufferPosition;
 				len = 0;
 				@Pc(320) int off;
@@ -337,6 +348,8 @@ public final class Js5 {
 						lens[k] += off;
 					}
 				}
+
+				// Prepare result
 				for (j = 0; j < groupSize; j++) {
 					if (fileIds == null) {
 						off = j;

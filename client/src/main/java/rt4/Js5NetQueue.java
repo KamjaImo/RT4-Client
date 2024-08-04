@@ -384,9 +384,9 @@ public final class Js5NetQueue {
 	}
 
 	@OriginalMember(owner = "client!jb", name = "a", descriptor = "(IIBIZ)Lclient!pm;")
-	public final Js5NetRequest read(@OriginalArg(1) int cacheKeyHigh, @OriginalArg(2) byte trailerLen, @OriginalArg(3) int cacheKeyLow, @OriginalArg(4) boolean isUrgent) {
+	public final Js5NetRequest read(@OriginalArg(1) int cacheKeyHigh, @OriginalArg(2) byte trailerLen, @OriginalArg(3) int archiveId, @OriginalArg(4) boolean isUrgent) {
 		@Pc(7) Js5NetRequest readRequest = new Js5NetRequest();
-		@Pc(14) long cacheKey = cacheKeyLow + ((long) cacheKeyHigh << 16);
+		@Pc(14) long cacheKey = archiveId + ((long) cacheKeyHigh << 16);
 		readRequest.urgent = isUrgent;
 		readRequest.secondaryKey = cacheKey;
 		readRequest.trailerLen = trailerLen;

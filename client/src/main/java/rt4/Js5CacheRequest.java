@@ -29,4 +29,10 @@ public final class Js5CacheRequest extends Js5Request {
 	public final int getPercentageComplete() {
 		return this.incomplete ? 0 : 100;
 	}
+
+	public static class Type {
+		public static int ReadSynchronous = 1;
+		public static int Write = 2;
+		public static int Read = 3;
+	}
 }

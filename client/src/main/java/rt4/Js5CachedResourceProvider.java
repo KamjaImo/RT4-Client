@@ -123,13 +123,13 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 		if (this.indexRequest.incomplete) {
 			return null;
 		}
-		@Pc(52) byte[] local52 = this.indexRequest.getData();
+		@Pc(52) byte[] indexDataRaw = this.indexRequest.getData();
 		if (this.indexRequest instanceof Js5CacheRequest) {
 			try {
-				if (local52 == null) {
+				if (indexDataRaw == null) {
 					throw new RuntimeException();
 				}
-				this.index = new Js5Index(local52, this.expectedChecksum);
+				this.index = new Js5Index(indexDataRaw, this.expectedChecksum);
 				if (this.expectedVersion != this.index.version) {
 					throw new RuntimeException();
 				}
@@ -144,10 +144,10 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 			}
 		} else {
 			try {
-				if (local52 == null) {
+				if (indexDataRaw == null) {
 					throw new RuntimeException();
 				}
-				this.index = new Js5Index(local52, this.expectedChecksum);
+				this.index = new Js5Index(indexDataRaw, this.expectedChecksum);
 			} catch (@Pc(131) RuntimeException ignored) {
 				this.netQueue.rekey();
 				this.index = null;
@@ -159,7 +159,7 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 				return null;
 			}
 			if (this.masterCache != null) {
-				this.cacheQueue.write(this.masterCache, local52, this.archive);
+				this.cacheQueue.write(this.masterCache, indexDataRaw, this.archive);
 			}
 		}
 		if (this.cache != null) {
@@ -315,50 +315,50 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 	}
 
 	@OriginalMember(owner = "client!bg", name = "a", descriptor = "(III)Lclient!il;")
-	private Js5Request fetchGroupInner(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1) {
-		@Pc(13) Js5Request local13 = (Js5Request) this.requests.get(arg1);
-		if (local13 != null && arg0 == 0 && !local13.urgent && local13.incomplete) {
-			local13.unlink();
-			local13 = null;
+	private Js5Request fetchGroupInner(@OriginalArg(0) int arg0, @OriginalArg(1) int group) {
+		@Pc(13) Js5Request request = (Js5Request) this.requests.get(group);
+		if (request != null && arg0 == 0 && !request.urgent && request.incomplete) {
+			request.unlink();
+			request = null;
 		}
-		if (local13 == null) {
+		if (request == null) {
 			if (arg0 == 0) {
-				if (this.cache == null || this.groupStatus[arg1] == -1) {
+				if (this.cache == null || this.groupStatus[group] == -1) {
 					if (this.netQueue.isUrgentRequestQueueFull()) {
 						return null;
 					}
-					local13 = this.netQueue.read(this.archive, (byte) 2, arg1, true);
+					request = this.netQueue.read(this.archive, (byte) 2, group, true);
 				} else {
-					local13 = this.cacheQueue.readSynchronous(this.cache, arg1);
+					request = this.cacheQueue.readSynchronous(this.cache, group);
 				}
 			} else if (arg0 == 1) {
 				if (this.cache == null) {
 					throw new RuntimeException();
 				}
-				local13 = this.cacheQueue.read(arg1, this.cache);
+				request = this.cacheQueue.read(group, this.cache);
 			} else if (arg0 == 2) {
 				if (this.cache == null) {
 					throw new RuntimeException();
 				}
-				if (this.groupStatus[arg1] != -1) {
+				if (this.groupStatus[group] != -1) {
 					throw new RuntimeException();
 				}
 				if (this.netQueue.isPrefetchRequestQueueFull()) {
 					return null;
 				}
-				local13 = this.netQueue.read(this.archive, (byte) 2, arg1, false);
+				request = this.netQueue.read(this.archive, (byte) 2, group, false);
 			} else {
 				throw new RuntimeException();
 			}
-			this.requests.put(local13, arg1);
+			this.requests.put(request, group);
 		}
-		if (local13.incomplete) {
+		if (request.incomplete) {
 			return null;
 		}
-		@Pc(161) byte[] local161 = local13.getData();
+		@Pc(161) byte[] local161 = request.getData();
 		@Pc(199) int local199;
 		@Pc(252) Js5NetRequest local252;
-		if (!(local13 instanceof Js5CacheRequest)) {
+		if (!(request instanceof Js5CacheRequest)) {
 			try {
 				if (local161 == null || local161.length <= 2) {
 					throw new RuntimeException();
@@ -366,33 +366,33 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 				crc32.reset();
 				crc32.update(local161, 0, local161.length - 2);
 				local199 = (int) crc32.getValue();
-				if (this.index.groupChecksums[arg1] != local199) {
+				if (this.index.groupChecksums[group] != local199) {
 					throw new RuntimeException();
 				}
 				this.netQueue.errors = 0;
 				this.netQueue.response = 0;
 			} catch (@Pc(225) RuntimeException local225) {
 				this.netQueue.rekey();
-				local13.unlink();
-				if (local13.urgent && !this.netQueue.isUrgentRequestQueueFull()) {
-					local252 = this.netQueue.read(this.archive, (byte) 2, arg1, true);
-					this.requests.put(local252, arg1);
+				request.unlink();
+				if (request.urgent && !this.netQueue.isUrgentRequestQueueFull()) {
+					local252 = this.netQueue.read(this.archive, (byte) 2, group, true);
+					this.requests.put(local252, group);
 				}
 				return null;
 			}
-			local161[local161.length - 2] = (byte) (this.index.groupVersions[arg1] >>> 8);
-			local161[local161.length - 1] = (byte) this.index.groupVersions[arg1];
+			local161[local161.length - 2] = (byte) (this.index.groupVersions[group] >>> 8);
+			local161[local161.length - 1] = (byte) this.index.groupVersions[group];
 			if (this.cache != null) {
-				this.cacheQueue.write(this.cache, local161, arg1);
-				if (this.groupStatus[arg1] != 1) {
+				this.cacheQueue.write(this.cache, local161, group);
+				if (this.groupStatus[group] != 1) {
 					this.verifiedGroups++;
-					this.groupStatus[arg1] = 1;
+					this.groupStatus[group] = 1;
 				}
 			}
-			if (!local13.urgent) {
-				local13.unlink();
+			if (!request.urgent) {
+				request.unlink();
 			}
-			return local13;
+			return request;
 		}
 		try {
 			if (local161 == null || local161.length <= 2) {
@@ -401,29 +401,29 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 			crc32.reset();
 			crc32.update(local161, 0, local161.length - 2);
 			local199 = (int) crc32.getValue();
-			if (this.index.groupChecksums[arg1] != local199) {
+			if (this.index.groupChecksums[group] != local199) {
 				throw new RuntimeException();
 			}
 			@Pc(385) int local385 = ((local161[local161.length - 2] & 0xFF) << 8) + (local161[local161.length - 1] & 0xFF);
-			if (local385 != (this.index.groupVersions[arg1] & 0xFFFF)) {
+			if (local385 != (this.index.groupVersions[group] & 0xFFFF)) {
 				throw new RuntimeException();
 			}
-			if (this.groupStatus[arg1] != 1) {
-				if (this.groupStatus[arg1] != 0) {
+			if (this.groupStatus[group] != 1) {
+				if (this.groupStatus[group] != 0) {
 				}
 				this.verifiedGroups++;
-				this.groupStatus[arg1] = 1;
+				this.groupStatus[group] = 1;
 			}
-			if (!local13.urgent) {
-				local13.unlink();
+			if (!request.urgent) {
+				request.unlink();
 			}
-			return local13;
+			return request;
 		} catch (@Pc(437) Exception local437) {
-			this.groupStatus[arg1] = -1;
-			local13.unlink();
-			if (local13.urgent && !this.netQueue.isUrgentRequestQueueFull()) {
-				local252 = this.netQueue.read(this.archive, (byte) 2, arg1, true);
-				this.requests.put(local252, arg1);
+			this.groupStatus[group] = -1;
+			request.unlink();
+			if (request.urgent && !this.netQueue.isUrgentRequestQueueFull()) {
+				local252 = this.netQueue.read(this.archive, (byte) 2, group, true);
+				this.requests.put(local252, group);
 			}
 			return null;
 		}
@@ -463,8 +463,8 @@ public final class Js5CachedResourceProvider extends Js5ResourceProvider {
 
 	@OriginalMember(owner = "client!bg", name = "c", descriptor = "(II)[B")
 	@Override
-	public final byte[] fetchGroup(@OriginalArg(0) int arg0) {
-		@Pc(9) Js5Request local9 = this.fetchGroupInner(0, arg0);
+	public final byte[] fetchGroup(@OriginalArg(0) int group) {
+		@Pc(9) Js5Request local9 = this.fetchGroupInner(0, group);
 		if (local9 == null) {
 			return null;
 		} else {
