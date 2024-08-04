@@ -312,19 +312,23 @@ public final class ScriptRunner {
 			GlRenderer.clearColorAndDepthBuffers(local171);
 			MaterialManager.method2731(Camera.cameraPitch, Camera.renderZ, Camera.renderY, Camera.renderX, Camera.cameraYaw);
 			GlRenderer.anInt5323 = client.loop;
-			SceneGraph.method2954(Camera.renderX, Camera.renderY, Camera.renderZ, Camera.cameraPitch, Camera.cameraYaw, removeRoofTiles, anIntArray205, anIntArray338, anIntArray518, anIntArray134, anIntArray476, Player.plane + 1, local387, PlayerList.self.xFine >> 7, PlayerList.self.zFine >> 7);
+			SceneGraph.renderScene(Camera.renderX, Camera.renderY, Camera.renderZ, Camera.cameraPitch, Camera.cameraYaw, removeRoofTiles, anIntArray205, anIntArray338, anIntArray518, anIntArray134, anIntArray476, Player.plane + 1, local387, PlayerList.self.xFine >> 7, PlayerList.self.zFine >> 7);
 			aBoolean299 = true;
 			LightingManager.method2390();
 			MaterialManager.method2731(0, 0, 0, 0, 0);
 			client.audioLoop();
-			method3858();
+			removeAllSceneryFromSceneGraph();
 			drawOverheads(y, width, x, anInt5029, height, anInt5029);
 			MiniMap.method4000(width, x, height, anInt5029, anInt5029, y);
 		} else {
+			// Fill in black background
 			SoftwareRaster.fillRect(x, y, width, height, 0);
-			SceneGraph.method2954(Camera.renderX, Camera.renderY, Camera.renderZ, Camera.cameraPitch, Camera.cameraYaw, removeRoofTiles, anIntArray205, anIntArray338, anIntArray518, anIntArray134, anIntArray476, Player.plane + 1, local387, PlayerList.self.xFine >> 7, PlayerList.self.zFine >> 7);
+			
+			// Render the 3D scene
+			SceneGraph.renderScene(Camera.renderX, Camera.renderY, Camera.renderZ, Camera.cameraPitch, Camera.cameraYaw, removeRoofTiles, anIntArray205, anIntArray338, anIntArray518, anIntArray134, anIntArray476, Player.plane + 1, local387, PlayerList.self.xFine >> 7, PlayerList.self.zFine >> 7);
+
 			client.audioLoop();
-			method3858();
+			removeAllSceneryFromSceneGraph();
 			drawOverheads(y, width, x, 256, height, 256);
 			MiniMap.method4000(width, x, height, 256, 256, y);
 		}
@@ -1277,7 +1281,7 @@ public final class ScriptRunner {
 	}
 
 	@OriginalMember(owner = "client!sc", name = "a", descriptor = "()V")
-	public static void method3858() {
+	public static void removeAllSceneryFromSceneGraph() {
 		for (@Pc(1) int local1 = 0; local1 < SceneGraph.sceneryLen; local1++) {
 			@Pc(8) Scenery local8 = SceneGraph.scenery[local1];
 			SceneGraph.removeScenery(local8);

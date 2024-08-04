@@ -409,16 +409,18 @@ public final class Player extends PathingEntity {
 		if (this.appearance == null) {
 			return;
 		}
-		@Pc(25) SeqType local25 = this.seqId != -1 && this.anInt3420 == 0 ? SeqTypeList.get(this.seqId) : null;
-		@Pc(54) SeqType local54 = this.movementSeqId == -1 || this.aBoolean98 || this.movementSeqId == this.getBasType().idleAnimationId && local25 != null ? null : SeqTypeList.get(this.movementSeqId);
-		@Pc(76) Model local76 = this.appearance.method1954(this.aClass147Array3, this.anInt3373, local54, local25, this.anInt3396, this.anInt3388, this.anInt3360, this.anInt3425, this.anInt3407);
-		@Pc(79) int local79 = PlayerAppearance.getModelCacheSize();
-		if (GlRenderer.enabled && GameShell.maxMemory < 96 && local79 > 50) {
+
+		// Get player model for current animation frame
+		@Pc(25) SeqType sequence = this.seqId != -1 && this.anInt3420 == 0 ? SeqTypeList.get(this.seqId) : null;
+		@Pc(54) SeqType movementSequence = this.movementSeqId == -1 || this.aBoolean98 || this.movementSeqId == this.getBasType().idleAnimationId && sequence != null ? null : SeqTypeList.get(this.movementSeqId);
+		@Pc(76) Model model = this.appearance.getPlayerModel(this.aClass147Array3, this.anInt3373, movementSequence, sequence, this.anInt3396, this.anInt3388, this.anInt3360, this.anInt3425, this.anInt3407);
+		@Pc(79) int modelCacheSize = PlayerAppearance.getModelCacheSize();
+		if (GlRenderer.enabled && GameShell.maxMemory < 96 && modelCacheSize > 50) {
 			method501();
 		}
 		@Pc(102) int local102;
-		if (client.runMode != client.RunModes.live && local79 < 50) {
-			local102 = 50 - local79;
+		if (client.runMode != client.RunModes.live && modelCacheSize < 50) {
+			local102 = 50 - modelCacheSize;
 			while (anInt2863 < local102) {
 				aByteArrayArray8[anInt2863] = new byte[102400];
 				anInt2863++;
@@ -428,13 +430,15 @@ public final class Player extends PathingEntity {
 				aByteArrayArray8[anInt2863] = null;
 			}
 		}
-		if (local76 == null) {
+		if (model == null) {
 			return;
 		}
-		this.minY = local76.getMinY();
+
+		// Render shadows
+		this.minY = model.getMinY();
 		@Pc(184) Model local184;
 		if (Preferences.characterShadowsOn && (this.appearance.npcId == -1 || NpcTypeList.get(this.appearance.npcId).hasShadow)) {
-			local184 = ShadowModelList.method1043(160, this.aBoolean171, local54 == null ? local25 : local54, this.xFine, 0, this.zFine, 0, 1, local76, arg0, local54 == null ? this.anInt3425 : this.anInt3407, this.anInt3424, 240);
+			local184 = ShadowModelList.method1043(160, this.aBoolean171, movementSequence == null ? sequence : movementSequence, this.xFine, 0, this.zFine, 0, 1, model, arg0, movementSequence == null ? this.anInt3425 : this.anInt3407, this.anInt3424, 240);
 			if (GlRenderer.enabled) {
 				@Pc(188) float local188 = GlRenderer.method4179();
 				@Pc(190) float local190 = GlRenderer.method4166();
@@ -447,45 +451,49 @@ public final class Player extends PathingEntity {
 				local184.render(0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, -1L, arg9, null);
 			}
 		}
+
+		// Render player dot on minimap
 		if (PlayerList.self == this) {
 			for (local102 = MiniMap.hintMapMarkers.length - 1; local102 >= 0; local102--) {
-				@Pc(245) MapMarker local245 = MiniMap.hintMapMarkers[local102];
-				if (local245 != null && local245.playerModelId != -1) {
+				@Pc(245) MapMarker hintMapMarker = MiniMap.hintMapMarkers[local102];
+				if (hintMapMarker != null && hintMapMarker.playerModelId != -1) {
 					@Pc(291) int local291;
 					@Pc(302) int local302;
-					if (local245.type == 1 && local245.actorTargetId >= 0 && NpcList.npcs.length > local245.actorTargetId) {
-						@Pc(278) Npc local278 = NpcList.npcs[local245.actorTargetId];
+					if (hintMapMarker.type == 1 && hintMapMarker.actorTargetId >= 0 && NpcList.npcs.length > hintMapMarker.actorTargetId) {
+						@Pc(278) Npc local278 = NpcList.npcs[hintMapMarker.actorTargetId];
 						if (local278 != null) {
 							local291 = local278.xFine / 32 - PlayerList.self.xFine / 32;
 							local302 = local278.zFine / 32 - PlayerList.self.zFine / 32;
-							this.method1263(null, local302, local76, local291, arg5, arg9, arg0, arg7, arg4, arg3, arg1, local245.playerModelId, arg2, arg6);
+							this.method1263(null, local302, model, local291, arg5, arg9, arg0, arg7, arg4, arg3, arg1, hintMapMarker.playerModelId, arg2, arg6);
 						}
 					}
-					if (local245.type == 2) {
-						@Pc(340) int local340 = (local245.targetX - Camera.originX) * 4 + 2 - PlayerList.self.xFine / 32;
-						local291 = (local245.targetZ - Camera.originZ) * 4 + 2 - PlayerList.self.zFine / 32;
-						this.method1263(null, local291, local76, local340, arg5, arg9, arg0, arg7, arg4, arg3, arg1, local245.playerModelId, arg2, arg6);
+					if (hintMapMarker.type == 2) {
+						@Pc(340) int local340 = (hintMapMarker.targetX - Camera.originX) * 4 + 2 - PlayerList.self.xFine / 32;
+						local291 = (hintMapMarker.targetZ - Camera.originZ) * 4 + 2 - PlayerList.self.zFine / 32;
+						this.method1263(null, local291, model, local340, arg5, arg9, arg0, arg7, arg4, arg3, arg1, hintMapMarker.playerModelId, arg2, arg6);
 					}
-					if (local245.type == 10 && local245.actorTargetId >= 0 && PlayerList.players.length > local245.actorTargetId) {
-						@Pc(395) Player local395 = PlayerList.players[local245.actorTargetId];
+					if (hintMapMarker.type == 10 && hintMapMarker.actorTargetId >= 0 && PlayerList.players.length > hintMapMarker.actorTargetId) {
+						@Pc(395) Player local395 = PlayerList.players[hintMapMarker.actorTargetId];
 						if (local395 != null) {
 							local291 = local395.xFine / 32 - PlayerList.self.xFine / 32;
 							local302 = local395.zFine / 32 - PlayerList.self.zFine / 32;
-							this.method1263(null, local302, local76, local291, arg5, arg9, arg0, arg7, arg4, arg3, arg1, local245.playerModelId, arg2, arg6);
+							this.method1263(null, local302, model, local291, arg5, arg9, arg0, arg7, arg4, arg3, arg1, hintMapMarker.playerModelId, arg2, arg6);
 						}
 					}
 				}
 			}
 		}
-		this.method2687(local76);
-		this.method2685(local76, arg0);
+
+		// Transform player model
+		this.method2687(model);
+		this.method2685(model, arg0);
 		local184 = null;
 		if (!this.aBoolean98 && this.spotAnimId != -1 && this.anInt3399 != -1) {
-			@Pc(471) SpotAnimType local471 = SpotAnimTypeList.get(this.spotAnimId);
-			local184 = local471.constructModel(this.anInt3418, this.anInt3399, this.anInt3361);
+			@Pc(471) SpotAnimType spotAnimType = SpotAnimTypeList.get(this.spotAnimId);
+			local184 = spotAnimType.constructModel(this.anInt3418, this.anInt3399, this.anInt3361);
 			if (local184 != null) {
 				local184.translate(0, -this.spotAnimY, 0);
-				if (local471.aBoolean100) {
+				if (spotAnimType.aBoolean100) {
 					if (PathingEntity.anInt2640 != 0) {
 						local184.rotateX(PathingEntity.anInt2640);
 					}
@@ -498,55 +506,57 @@ public final class Player extends PathingEntity {
 				}
 			}
 		}
-		@Pc(515) Model local515 = null;
+		@Pc(515) Model attachmentModel = null;
 		if (!this.aBoolean98 && this.attachment != null) {
 			if (client.loop >= this.attachmentResetAt) {
 				this.attachment = null;
 			}
 			if (this.attachmentSetAt <= client.loop && this.attachmentResetAt > client.loop) {
 				if (this.attachment instanceof Loc) {
-					local515 = (Model) ((Loc) this.attachment).method1049();
+					attachmentModel = (Model) ((Loc) this.attachment).method1049();
 				} else {
-					local515 = (Model) this.attachment;
+					attachmentModel = (Model) this.attachment;
 				}
-				local515.translate(this.attachmentXFine - this.xFine, this.attachmentY + -this.anInt3424, this.attachmentZFine - this.zFine);
+				attachmentModel.translate(this.attachmentXFine - this.xFine, this.attachmentY + -this.anInt3424, this.attachmentZFine - this.zFine);
 				if (this.anInt3400 == 512) {
-					local515.method4578();
+					attachmentModel.method4578();
 				} else if (this.anInt3400 == 1024) {
-					local515.method4552();
+					attachmentModel.method4552();
 				} else if (this.anInt3400 == 1536) {
-					local515.rotateCounterClockwise();
+					attachmentModel.rotateCounterClockwise();
 				}
 			}
 		}
+
+		// Render player model
 		if (GlRenderer.enabled) {
-			local76.pickable = true;
-			local76.render(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, this.particleSystem);
+			model.pickable = true;
+			model.render(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, this.particleSystem);
 			if (local184 != null) {
 				local184.pickable = true;
 				local184.render(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, this.particleSystem);
 			}
 		} else {
 			if (local184 != null) {
-				local76 = ((SoftwareModel) local76).method4588(local184);
+				model = ((SoftwareModel) model).method4588(local184);
 			}
-			if (local515 != null) {
-				local76 = ((SoftwareModel) local76).method4588(local515);
+			if (attachmentModel != null) {
+				model = ((SoftwareModel) model).method4588(attachmentModel);
 			}
-			local76.pickable = true;
-			local76.render(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, this.particleSystem);
+			model.pickable = true;
+			model.render(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, this.particleSystem);
 		}
-		if (local515 == null) {
+		if (attachmentModel == null) {
 			return;
 		}
 		if (this.anInt3400 == 512) {
-			local515.rotateCounterClockwise();
+			attachmentModel.rotateCounterClockwise();
 		} else if (this.anInt3400 == 1024) {
-			local515.method4552();
+			attachmentModel.method4552();
 		} else if (this.anInt3400 == 1536) {
-			local515.method4578();
+			attachmentModel.method4578();
 		}
-		local515.translate(this.xFine - this.attachmentXFine, -this.attachmentY + this.anInt3424, this.zFine - this.attachmentZFine);
+		attachmentModel.translate(this.xFine - this.attachmentXFine, -this.attachmentY + this.anInt3424, this.zFine - this.attachmentZFine);
 	}
 
 	@OriginalMember(owner = "client!e", name = "a", descriptor = "(Lclient!ga;ILclient!ak;IIIIIIIIIIII)V")

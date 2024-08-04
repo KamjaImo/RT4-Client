@@ -244,12 +244,14 @@ public final class PlayerAppearance {
 	}
 
 	@OriginalMember(owner = "client!hh", name = "a", descriptor = "([Lclient!ub;ILclient!tk;Lclient!tk;IIIIZII)Lclient!ak;")
-	public final Model method1954(@OriginalArg(0) PathingEntity_Class147[] arg0, @OriginalArg(1) int arg1, @OriginalArg(2) SeqType arg2, @OriginalArg(3) SeqType arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(7) int arg6, @OriginalArg(9) int arg7, @OriginalArg(10) int arg8) {
+	public final Model getPlayerModel(@OriginalArg(0) PathingEntity_Class147[] arg0, @OriginalArg(1) int arg1, @OriginalArg(2) SeqType arg2, @OriginalArg(3) SeqType arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(7) int arg6, @OriginalArg(9) int arg7, @OriginalArg(10) int arg8) {
+		// If player is being rendered as an NPC, then render that NPC instead
 		if (this.npcId != -1) {
 			return NpcTypeList.get(this.npcId).getBodyModel(arg0, arg5, arg8, arg1, arg6, arg7, arg2, arg4, arg3);
 		}
+
 		@Pc(38) int[] local38 = this.identikit;
-		@Pc(41) long local41 = this.checksum;
+		@Pc(41) long checksum = this.checksum;
 		if (arg3 != null && (arg3.mainhand >= 0 || arg3.offhand >= 0)) {
 			local38 = new int[12];
 			for (@Pc(61) int local61 = 0; local61 < 12; local61++) {
@@ -257,24 +259,24 @@ public final class PlayerAppearance {
 			}
 			if (arg3.mainhand >= 0) {
 				if (arg3.mainhand == 65535) {
-					local41 ^= 0xFFFFFFFF00000000L;
+					checksum ^= 0xFFFFFFFF00000000L;
 					local38[5] = 0;
 				} else {
 					local38[5] = arg3.mainhand | 0x40000000;
-					local41 ^= (long) local38[5] << 32;
+					checksum ^= (long) local38[5] << 32;
 				}
 			}
 			if (arg3.offhand >= 0) {
 				if (arg3.offhand == 65535) {
 					local38[3] = 0;
-					local41 ^= 0xFFFFFFFFL;
+					checksum ^= 0xFFFFFFFFL;
 				} else {
 					local38[3] = arg3.offhand | 0x40000000;
-					local41 ^= local38[3];
+					checksum ^= local38[3];
 				}
 			}
 		}
-		@Pc(154) Model local154 = (Model) bodyModels.get(local41);
+		@Pc(154) Model bodyModel = (Model) bodyModels.get(checksum);
 		@Pc(158) boolean local158;
 		@Pc(353) int local353;
 		@Pc(360) int local360;
@@ -287,7 +289,7 @@ public final class PlayerAppearance {
 		@Pc(481) int local481;
 		@Pc(598) int local598;
 		@Pc(346) int local346;
-		if (local154 == null) {
+		if (bodyModel == null) {
 			local158 = false;
 			@Pc(169) int local169;
 			for (@Pc(160) int local160 = 0; local160 < 12; local160++) {
@@ -302,27 +304,27 @@ public final class PlayerAppearance {
 			}
 			if (local158) {
 				if (this.prevChecksum != -1L) {
-					local154 = (Model) bodyModels.get(this.prevChecksum);
+					bodyModel = (Model) bodyModels.get(this.prevChecksum);
 				}
-				if (local154 == null) {
+				if (bodyModel == null) {
 					return null;
 				}
 			}
-			if (local154 == null) {
-				@Pc(239) RawModel[] local239 = new RawModel[12];
+			if (bodyModel == null) {
+				@Pc(239) RawModel[] bodyModelParts = new RawModel[12];
 				@Pc(250) int local250;
-				for (local169 = 0; local169 < 12; local169++) {
-					local250 = local38[local169];
-					@Pc(272) RawModel local272;
+				for (int bodyModelPartIdx = 0; bodyModelPartIdx < 12; bodyModelPartIdx++) {
+					local250 = local38[bodyModelPartIdx];
+					@Pc(272) RawModel bodyModelPart;
 					if ((local250 & 0x40000000) != 0) {
-						local272 = ObjTypeList.get(local250 & 0x3FFFFFFF).getBodyModel(this.gender);
-						if (local272 != null) {
-							local239[local169] = local272;
+						bodyModelPart = ObjTypeList.get(local250 & 0x3FFFFFFF).getBodyModel(this.gender);
+						if (bodyModelPart != null) {
+							bodyModelParts[bodyModelPartIdx] = bodyModelPart;
 						}
 					} else if ((Integer.MIN_VALUE & local250) != 0) {
-						local272 = IdkTypeList.get(local250 & 0x3FFFFFFF).getBodyModel();
-						if (local272 != null) {
-							local239[local169] = local272;
+						bodyModelPart = IdkTypeList.get(local250 & 0x3FFFFFFF).getBodyModel();
+						if (bodyModelPart != null) {
+							bodyModelParts[bodyModelPartIdx] = bodyModelPart;
 						}
 					}
 				}
@@ -332,7 +334,7 @@ public final class PlayerAppearance {
 				}
 				if (local303 != null && local303.modelRotateTranslate != null) {
 					for (local250 = 0; local250 < local303.modelRotateTranslate.length; local250++) {
-						if (local303.modelRotateTranslate[local250] != null && local239[local250] != null) {
+						if (local303.modelRotateTranslate[local250] != null && bodyModelParts[local250] != null) {
 							local346 = local303.modelRotateTranslate[local250][0];
 							local353 = local303.modelRotateTranslate[local250][1];
 							local360 = local303.modelRotateTranslate[local250][2];
@@ -376,29 +378,29 @@ public final class PlayerAppearance {
 								local404[10] = local353;
 							}
 							if (local374 != 0 || local367 != 0 || local381 != 0) {
-								local239[local250].method1684(local374, local367, local381);
+								bodyModelParts[local250].method1684(local374, local367, local381);
 							}
 							if (local346 != 0 || local353 != 0 || local360 != 0) {
-								local239[local250].translate(local346, local353, local360);
+								bodyModelParts[local250].translate(local346, local353, local360);
 							}
 						}
 					}
 				}
-				@Pc(740) RawModel local740 = new RawModel(local239, local239.length);
+				@Pc(740) RawModel bodyModelRaw = new RawModel(bodyModelParts, bodyModelParts.length);
 				for (local346 = 0; local346 < 5; local346++) {
 					if (destinationBodyColors[local346].length > this.colors[local346]) {
-						local740.recolor(aShortArray65[local346], destinationBodyColors[local346][this.colors[local346]]);
+						bodyModelRaw.recolor(aShortArray65[local346], destinationBodyColors[local346][this.colors[local346]]);
 					}
 					if (destinationSkinColors[local346].length > this.colors[local346]) {
-						local740.recolor(aShortArray41[local346], destinationSkinColors[local346][this.colors[local346]]);
+						bodyModelRaw.recolor(aShortArray41[local346], destinationSkinColors[local346][this.colors[local346]]);
 					}
 				}
-				local154 = local740.createModel(64, 850, -30, -50, -30);
+				bodyModel = bodyModelRaw.createModel(64, 850, -30, -50, -30);
 				if (GlRenderer.enabled) {
-					((GlModel) local154).method4111(false, false, true, false, false, true);
+					((GlModel) bodyModel).method4111(false, false, true, false, false, true);
 				}
-				bodyModels.put(local154, local41);
-				this.prevChecksum = local41;
+				bodyModels.put(bodyModel, checksum);
+				this.prevChecksum = checksum;
 			}
 		}
 		local158 = false;
@@ -445,7 +447,7 @@ public final class PlayerAppearance {
 			}
 		}
 		if (!local158 && arg3 == null && arg2 == null) {
-			return local154;
+			return bodyModel;
 		}
 		local353 = -1;
 		local360 = -1;
@@ -509,7 +511,7 @@ public final class PlayerAppearance {
 				}
 			}
 		}
-		@Pc(1284) Model local1284 = local154.method4572(!local827, !local836, !local838);
+		@Pc(1284) Model local1284 = bodyModel.method4572(!local827, !local836, !local838);
 		local481 = 0;
 		local598 = 1;
 		while (local481 < local346) {

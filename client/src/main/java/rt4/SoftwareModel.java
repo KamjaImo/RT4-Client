@@ -2390,10 +2390,10 @@ public final class SoftwareModel extends Model {
 
 	@OriginalMember(owner = "client!w", name = "a", descriptor = "(IIII)V")
 	@Override
-	protected void method4567(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3) {
+	protected void method4567(@OriginalArg(0) int baseType, @OriginalArg(1) int animX, @OriginalArg(2) int animY, @OriginalArg(3) int animZ) {
 		@Pc(3) int local3;
 		@Pc(11) int local11;
-		if (arg0 == 0) {
+		if (baseType == 0) {
 			local3 = 0;
 			anInt5793 = 0;
 			anInt5791 = 0;
@@ -2405,45 +2405,45 @@ public final class SoftwareModel extends Model {
 				local3++;
 			}
 			if (local3 > 0) {
-				anInt5793 = anInt5793 / local3 + arg1;
-				anInt5791 = anInt5791 / local3 + arg2;
-				anInt5792 = anInt5792 / local3 + arg3;
+				anInt5793 = anInt5793 / local3 + animX;
+				anInt5791 = anInt5791 / local3 + animY;
+				anInt5792 = anInt5792 / local3 + animZ;
 			} else {
-				anInt5793 = arg1;
-				anInt5791 = arg2;
-				anInt5792 = arg3;
+				anInt5793 = animX;
+				anInt5791 = animY;
+				anInt5792 = animZ;
 			}
-		} else if (arg0 == 1) {
+		} else if (baseType == 1) {
 			for (local3 = 0; local3 < this.vertexCount; local3++) {
-				this.vertexX[local3] += arg1;
-				this.vertexY[local3] += arg2;
-				this.vertexZ[local3] += arg3;
+				this.vertexX[local3] += animX;
+				this.vertexY[local3] += animY;
+				this.vertexZ[local3] += animZ;
 			}
 		} else {
 			@Pc(146) int local146;
 			@Pc(164) int local164;
-			if (arg0 == 2) {
+			if (baseType == 2) {
 				for (local3 = 0; local3 < this.vertexCount; local3++) {
 					this.vertexX[local3] -= anInt5793;
 					this.vertexY[local3] -= anInt5791;
 					this.vertexZ[local3] -= anInt5792;
-					if (arg3 != 0) {
-						local11 = MathUtils.sin[arg3];
-						local146 = MathUtils.cos[arg3];
+					if (animZ != 0) {
+						local11 = MathUtils.sin[animZ];
+						local146 = MathUtils.cos[animZ];
 						local164 = this.vertexY[local3] * local11 + this.vertexX[local3] * local146 + 32767 >> 16;
 						this.vertexY[local3] = this.vertexY[local3] * local146 + 32767 - this.vertexX[local3] * local11 >> 16;
 						this.vertexX[local3] = local164;
 					}
-					if (arg1 != 0) {
-						local11 = MathUtils.sin[arg1];
-						local146 = MathUtils.cos[arg1];
+					if (animX != 0) {
+						local11 = MathUtils.sin[animX];
+						local146 = MathUtils.cos[animX];
 						local164 = this.vertexY[local3] * local146 + 32767 - this.vertexZ[local3] * local11 >> 16;
 						this.vertexZ[local3] = this.vertexY[local3] * local11 + this.vertexZ[local3] * local146 + 32767 >> 16;
 						this.vertexY[local3] = local164;
 					}
-					if (arg2 != 0) {
-						local11 = MathUtils.sin[arg2];
-						local146 = MathUtils.cos[arg2];
+					if (animY != 0) {
+						local11 = MathUtils.sin[animY];
+						local146 = MathUtils.cos[animY];
 						local164 = this.vertexZ[local3] * local11 + this.vertexX[local3] * local146 + 32767 >> 16;
 						this.vertexZ[local3] = this.vertexZ[local3] * local146 + 32767 - this.vertexX[local3] * local11 >> 16;
 						this.vertexX[local3] = local164;
@@ -2452,21 +2452,21 @@ public final class SoftwareModel extends Model {
 					this.vertexY[local3] += anInt5791;
 					this.vertexZ[local3] += anInt5792;
 				}
-			} else if (arg0 == 3) {
+			} else if (baseType == 3) {
 				for (local3 = 0; local3 < this.vertexCount; local3++) {
 					this.vertexX[local3] -= anInt5793;
 					this.vertexY[local3] -= anInt5791;
 					this.vertexZ[local3] -= anInt5792;
-					this.vertexX[local3] = this.vertexX[local3] * arg1 / 128;
-					this.vertexY[local3] = this.vertexY[local3] * arg2 / 128;
-					this.vertexZ[local3] = this.vertexZ[local3] * arg3 / 128;
+					this.vertexX[local3] = this.vertexX[local3] * animX / 128;
+					this.vertexY[local3] = this.vertexY[local3] * animY / 128;
+					this.vertexZ[local3] = this.vertexZ[local3] * animZ / 128;
 					this.vertexX[local3] += anInt5793;
 					this.vertexY[local3] += anInt5791;
 					this.vertexZ[local3] += anInt5792;
 				}
-			} else if (arg0 == 5) {
+			} else if (baseType == 5) {
 				for (local3 = 0; local3 < this.triangleCount; local3++) {
-					local11 = (this.triangleAlpha[local3] & 0xFF) + arg1 * 8;
+					local11 = (this.triangleAlpha[local3] & 0xFF) + animX * 8;
 					if (local11 < 0) {
 						local11 = 0;
 					} else if (local11 > 255) {
@@ -2474,20 +2474,20 @@ public final class SoftwareModel extends Model {
 					}
 					this.triangleAlpha[local3] = (byte) local11;
 				}
-			} else if (arg0 == 7) {
+			} else if (baseType == 7) {
 				for (local3 = 0; local3 < this.triangleCount; local3++) {
 					local11 = this.triangleColors[local3] & 0xFFFF;
 					local146 = local11 >> 10 & 0x3F;
 					local164 = local11 >> 7 & 0x7;
 					@Pc(492) int local492 = local11 & 0x7F;
-					@Pc(498) int local498 = local146 + arg1 & 0x3F;
-					local164 += arg2;
+					@Pc(498) int local498 = local146 + animX & 0x3F;
+					local164 += animY;
 					if (local164 < 0) {
 						local164 = 0;
 					} else if (local164 > 7) {
 						local164 = 7;
 					}
-					local492 += arg3;
+					local492 += animZ;
 					if (local492 < 0) {
 						local492 = 0;
 					} else if (local492 > 127) {

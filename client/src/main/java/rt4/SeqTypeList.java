@@ -49,10 +49,10 @@ public class SeqTypeList {
 	}
 
 	@OriginalMember(owner = "client!lb", name = "a", descriptor = "(Lclient!ve;Lclient!ve;ILclient!ve;)V")
-	public static void init(@OriginalArg(0) Js5 arg0, @OriginalArg(1) Js5 arg1, @OriginalArg(3) Js5 arg2) {
+	public static void init(@OriginalArg(0) Js5 basesArchive, @OriginalArg(1) Js5 arg1, @OriginalArg(3) Js5 animsArchive) {
 		archive = arg1;
-		basesArchive = arg0;
-		animsArchive = arg2;
+		SeqTypeList.basesArchive = basesArchive;
+		SeqTypeList.animsArchive = animsArchive;
 	}
 
 	@OriginalMember(owner = "client!an", name = "a", descriptor = "(Z)V")

@@ -909,7 +909,7 @@ public class Cs1ScriptRunner {
 												}
 											} else if (component.modelType == 5) {
 												if (component.modelId == -1) {
-													local2589 = PlayerAppearance.DEFAULT.method1954(null, -1, null, null, 0, -1, 0, -1, -1);
+													local2589 = PlayerAppearance.DEFAULT.getPlayerModel(null, -1, null, null, 0, -1, 0, -1, -1);
 												} else {
 													color = component.modelId & 0x7FF;
 													if (color == PlayerList.selfId) {
@@ -918,7 +918,7 @@ public class Cs1ScriptRunner {
 													@Pc(2751) Player local2751 = PlayerList.players[color];
 													@Pc(2760) SeqType local2760 = local276 == -1 ? null : SeqTypeList.get(local276);
 													if (local2751 != null && (int) local2751.username.encode37() << 11 == (component.modelId & 0xFFFFF800)) {
-														local2589 = local2751.appearance.method1954(null, -1, null, local2760, 0, -1, 0, component.anInt510, 0);
+														local2589 = local2751.appearance.getPlayerModel(null, -1, null, local2760, 0, -1, 0, component.anInt510, 0);
 													}
 												}
 											} else if (local276 == -1) {

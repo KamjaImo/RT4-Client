@@ -172,11 +172,11 @@ public final class RawModel extends Entity {
 	}
 
 	@OriginalMember(owner = "client!gb", name = "<init>", descriptor = "([B)V")
-	public RawModel(@OriginalArg(0) byte[] src) {
-		if (src[src.length - 1] == -1 && src[src.length - 2] == -1) {
-			this.decodeNew(src);
+	public RawModel(@OriginalArg(0) byte[] modelData) {
+		if (modelData[modelData.length - 1] == -1 && modelData[modelData.length - 2] == -1) {
+			this.decodeNew(modelData);
 		} else {
-			this.decodeOld(src);
+			this.decodeOld(modelData);
 		}
 	}
 
@@ -453,8 +453,8 @@ public final class RawModel extends Entity {
 	}
 
 	@OriginalMember(owner = "client!gb", name = "a", descriptor = "(Lclient!ve;II)Lclient!gb;")
-	public static RawModel create(@OriginalArg(0) Js5 archive, @OriginalArg(1) int id) {
-		@Pc(5) byte[] data = archive.fetchFile(id, 0);
+	public static RawModel create(@OriginalArg(0) Js5 modelsArchive, @OriginalArg(1) int id) {
+		@Pc(5) byte[] data = modelsArchive.fetchFile(id, 0);
 		return data == null ? null : new RawModel(data);
 	}
 

@@ -41,27 +41,27 @@ public abstract class Model extends Entity {
 	public abstract void method4552();
 
 	@OriginalMember(owner = "client!ak", name = "a", descriptor = "(Lclient!jm;Lclient!ne;Lclient!ne;II[ZZZI[I)V")
-	private void method4553(@OriginalArg(0) AnimBase arg0, @OriginalArg(1) AnimFrame arg1, @OriginalArg(2) AnimFrame arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) boolean[] arg5, @OriginalArg(6) boolean arg6, @OriginalArg(7) boolean arg7, @OriginalArg(8) int arg8, @OriginalArg(9) int[] arg9) {
+	private void method4553(@OriginalArg(0) AnimBase base, @OriginalArg(1) AnimFrame arg1, @OriginalArg(2) AnimFrame arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) boolean[] arg5, @OriginalArg(6) boolean arg6, @OriginalArg(7) boolean arg7, @OriginalArg(8) int arg8, @OriginalArg(9) int[] arg9) {
 		@Pc(5) int local5;
 		if (arg2 == null || arg3 == 0) {
 			for (local5 = 0; local5 < arg1.length; local5++) {
 				@Pc(14) short local14 = arg1.indices[local5];
-				if (arg5 == null || arg5[local14] == arg6 || arg0.types[local14] == 0) {
+				if (arg5 == null || arg5[local14] == arg6 || base.types[local14] == 0) {
 					@Pc(32) short local32 = arg1.prevOriginIndices[local5];
 					@Pc(42) int local42;
 					if (local32 != -1) {
-						local42 = arg8 & arg0.parts[local32];
+						local42 = arg8 & base.parts[local32];
 						if (local42 == 65535) {
-							this.method4569(0, arg0.bones[local32], 0, 0, 0, arg7);
+							this.method4569(0, base.bones[local32], 0, 0, 0, arg7);
 						} else {
-							this.method4577(0, arg0.bones[local32], 0, 0, 0, arg7, local42, arg9);
+							this.method4577(0, base.bones[local32], 0, 0, 0, arg7, local42, arg9);
 						}
 					}
-					local42 = arg8 & arg0.parts[local14];
+					local42 = arg8 & base.parts[local14];
 					if (local42 == 65535) {
-						this.method4569(arg0.types[local14], arg0.bones[local14], arg1.x[local5], arg1.y[local5], arg1.z[local5], arg7);
+						this.method4569(base.types[local14], base.bones[local14], arg1.x[local5], arg1.y[local5], arg1.z[local5], arg7);
 					} else {
-						this.method4577(arg0.types[local14], arg0.bones[local14], arg1.x[local5], arg1.y[local5], arg1.z[local5], arg7, local42, arg9);
+						this.method4577(base.types[local14], base.bones[local14], arg1.x[local5], arg1.y[local5], arg1.z[local5], arg7, local42, arg9);
 					}
 				}
 			}
@@ -69,13 +69,13 @@ public abstract class Model extends Entity {
 		}
 		local5 = 0;
 		@Pc(136) int local136 = 0;
-		for (@Pc(138) int local138 = 0; local138 < arg0.transforms; local138++) {
+		for (@Pc(138) int local138 = 0; local138 < base.transforms; local138++) {
 			@Pc(144) boolean local144 = local5 < arg1.length && arg1.indices[local5] == local138;
 			@Pc(158) boolean local158 = local136 < arg2.length && arg2.indices[local136] == local138;
 			if (local144 || local158) {
-				if (arg5 == null || arg5[local138] == arg6 || arg0.types[local138] == 0) {
+				if (arg5 == null || arg5[local138] == arg6 || base.types[local138] == 0) {
 					@Pc(196) short local196 = 0;
-					@Pc(201) int local201 = arg0.types[local138];
+					@Pc(201) int local201 = base.types[local138];
 					if (local201 == 3) {
 						local196 = 128;
 					}
@@ -155,25 +155,25 @@ public abstract class Model extends Entity {
 						local298 = local223 + (local262 - local223) * arg3 / arg4;
 					}
 					if (local228 != -1) {
-						local308 = arg8 & arg0.parts[local228];
+						local308 = arg8 & base.parts[local228];
 						if (local308 == 65535) {
-							this.method4569(0, arg0.bones[local228], 0, 0, 0, arg7);
+							this.method4569(0, base.bones[local228], 0, 0, 0, arg7);
 						} else {
-							this.method4577(0, arg0.bones[local228], 0, 0, 0, arg7, local308, arg9);
+							this.method4577(0, base.bones[local228], 0, 0, 0, arg7, local308, arg9);
 						}
 					} else if (local267 != -1) {
-						local308 = arg8 & arg0.parts[local267];
+						local308 = arg8 & base.parts[local267];
 						if (local308 == 65535) {
-							this.method4569(0, arg0.bones[local267], 0, 0, 0, arg7);
+							this.method4569(0, base.bones[local267], 0, 0, 0, arg7);
 						} else {
-							this.method4577(0, arg0.bones[local267], 0, 0, 0, arg7, local308, arg9);
+							this.method4577(0, base.bones[local267], 0, 0, 0, arg7, local308, arg9);
 						}
 					}
-					local308 = arg8 & arg0.parts[local138];
+					local308 = arg8 & base.parts[local138];
 					if (local308 == 65535) {
-						this.method4569(local201, arg0.bones[local138], local294, local296, local298, arg7);
+						this.method4569(local201, base.bones[local138], local294, local296, local298, arg7);
 					} else {
-						this.method4577(local201, arg0.bones[local138], local294, local296, local298, arg7, local308, arg9);
+						this.method4577(local201, base.bones[local138], local294, local296, local298, arg7, local308, arg9);
 					}
 				} else {
 					if (local144) {

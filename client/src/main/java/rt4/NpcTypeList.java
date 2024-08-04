@@ -17,9 +17,9 @@ public class NpcTypeList {
 	public static Js5 archive;
 
 	@OriginalMember(owner = "client!h", name = "a", descriptor = "(Lclient!ve;Lclient!ve;Z)V")
-	public static void init(@OriginalArg(0) Js5 arg0, @OriginalArg(1) Js5 arg1) {
-		modelsArchive = arg0;
-		archive = arg1;
+	public static void init(@OriginalArg(0) Js5 modelsArchive, @OriginalArg(1) Js5 arg1) {
+		NpcTypeList.modelsArchive = modelsArchive;
+		NpcTypeList.archive = arg1;
 	}
 
 	@OriginalMember(owner = "client!rg", name = "b", descriptor = "(II)Lclient!me;")

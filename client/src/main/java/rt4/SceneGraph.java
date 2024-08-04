@@ -2898,7 +2898,7 @@ public class SceneGraph {
 	}
 
 	@OriginalMember(owner = "client!mf", name = "a", descriptor = "(IIIII[[[B[I[I[I[I[IIBII)V")
-	public static void method2954(@OriginalArg(0) int renderX, @OriginalArg(1) int renderY, @OriginalArg(2) int renderZ, @OriginalArg(3) int cameraPitch, @OriginalArg(4) int cameraYaw, @OriginalArg(5) byte[][][] removeRoofTiles, @OriginalArg(6) int[] arg6, @OriginalArg(7) int[] arg7, @OriginalArg(8) int[] arg8, @OriginalArg(9) int[] arg9, @OriginalArg(10) int[] arg10, @OriginalArg(11) int level, @OriginalArg(12) byte arg12, @OriginalArg(13) int centerX, @OriginalArg(14) int centerZ) {
+	public static void renderScene(@OriginalArg(0) int renderX, @OriginalArg(1) int renderY, @OriginalArg(2) int renderZ, @OriginalArg(3) int cameraPitch, @OriginalArg(4) int cameraYaw, @OriginalArg(5) byte[][][] removeRoofTiles, @OriginalArg(6) int[] arg6, @OriginalArg(7) int[] arg7, @OriginalArg(8) int[] arg8, @OriginalArg(9) int[] arg9, @OriginalArg(10) int[] arg10, @OriginalArg(11) int level, @OriginalArg(12) byte arg12, @OriginalArg(13) int centerX, @OriginalArg(14) int centerZ) {
 		pitchSin = MathUtils.sin[cameraPitch];
 		pitchCos = MathUtils.cos[cameraPitch];
 		yawSin = MathUtils.sin[cameraYaw];
@@ -2969,7 +2969,7 @@ public class SceneGraph {
         method2419();
         if (underWaterGroundTiles != null) {
             setUnderwater(true);
-            method3292(renderX, renderY, renderZ, null, 0, (byte) 0, centerX, centerZ);
+            renderScene(renderX, renderY, renderZ, null, 0, (byte) 0, centerX, centerZ);
             if (GlRenderer.enabled) {
                 MaterialManager.renderingUnderwater = false;
                 MaterialManager.setMaterial(0, 0);
@@ -2978,11 +2978,11 @@ public class SceneGraph {
             }
             setUnderwater(false);
         }
-        method3292(renderX, renderY, renderZ, removeRoofTiles, level, arg12, centerX, centerZ);
+        renderScene(renderX, renderY, renderZ, removeRoofTiles, level, arg12, centerX, centerZ);
     }
 
 	@OriginalMember(owner = "client!uc", name = "a", descriptor = "(III[[[BIBII)V")
-	public static void method3292(@OriginalArg(0) int renderX, @OriginalArg(1) int renderY, @OriginalArg(2) int renderZ, @OriginalArg(3) byte[][][] removeRoofTiles, @OriginalArg(4) int arg4, @OriginalArg(5) byte arg5, @OriginalArg(6) int centerX, @OriginalArg(7) int centerZ) {
+	public static void renderScene(@OriginalArg(0) int renderX, @OriginalArg(1) int renderY, @OriginalArg(2) int renderZ, @OriginalArg(3) byte[][][] removeRoofTiles, @OriginalArg(4) int arg4, @OriginalArg(5) byte arg5, @OriginalArg(6) int centerX, @OriginalArg(7) int centerZ) {
 		anInt437++;
 		anInt1142 = 0;
 		@Pc(9) int local9 = centerX - 16;
