@@ -79,7 +79,7 @@ public final class GlRenderer {
 	private static boolean textureMatrixModified = false;
 
 	@OriginalMember(owner = "client!tf", name = "g", descriptor = "I")
-	public static int anInt5323 = 0;
+	public static int frameNumber = 0;
 
 	@OriginalMember(owner = "client!tf", name = "h", descriptor = "I")
 	private static int textureCombineAlphaMode = 0;

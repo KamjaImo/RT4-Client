@@ -50,24 +50,24 @@ public final class WaterfallMaterialRenderer implements MaterialRenderer {
 		local7.glPushMatrix();
 		local7.glLoadIdentity();
 		local7.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-		local7.glRotatef((float) MaterialManager.anInt5559 * 360.0F / 2048.0F, 1.0F, 0.0F, 0.0F);
-		local7.glRotatef((float) MaterialManager.anInt1815 * 360.0F / 2048.0F, 0.0F, 1.0F, 0.0F);
-		local7.glTranslatef((float) -MaterialManager.anInt406, (float) -MaterialManager.anInt4675, (float) -MaterialManager.anInt5158);
+		local7.glRotatef((float) MaterialManager.cameraPitch * 360.0F / 2048.0F, 1.0F, 0.0F, 0.0F);
+		local7.glRotatef((float) MaterialManager.cameraYaw * 360.0F / 2048.0F, 0.0F, 1.0F, 0.0F);
+		local7.glTranslatef((float) -MaterialManager.cameraPositionX, (float) -MaterialManager.cameraPositionY, (float) -MaterialManager.cameraPositionZ);
 		local7.glTexGenfv(GL2.GL_S, GL2.GL_EYE_PLANE, this.aFloatArray21, 0);
-		this.aFloatArray21[3] = local27 * (float) GlRenderer.anInt5323;
+		this.aFloatArray21[3] = local27 * (float) GlRenderer.frameNumber;
 		this.aFloatArray21[0] = 0.0F;
 		this.aFloatArray21[2] = 0.0F;
 		this.aFloatArray21[1] = local36;
 		local7.glTexGenfv(GL2.GL_T, GL2.GL_EYE_PLANE, this.aFloatArray21, 0);
 		local7.glPopMatrix();
 		if (MaterialManager.allows3DTextureMapping) {
-			this.aFloatArray21[3] = (float) GlRenderer.anInt5323 * local18;
+			this.aFloatArray21[3] = (float) GlRenderer.frameNumber * local18;
 			this.aFloatArray21[1] = 0.0F;
 			this.aFloatArray21[0] = 0.0F;
 			this.aFloatArray21[2] = 0.0F;
 			local7.glTexGenfv(GL2.GL_R, GL2.GL_OBJECT_PLANE, this.aFloatArray21, 0);
 		} else {
-			@Pc(189) int local189 = (int) ((float) GlRenderer.anInt5323 * local18 * 64.0F);
+			@Pc(189) int local189 = (int) ((float) GlRenderer.frameNumber * local18 * 64.0F);
 			local7.glBindTexture(GL2.GL_TEXTURE_2D, MaterialManager.waterfallTextures[local189 % 64]);
 		}
 		local7.glActiveTexture(GL2.GL_TEXTURE0);

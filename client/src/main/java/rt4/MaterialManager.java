@@ -8,7 +8,15 @@ import org.openrs2.deob.annotation.Pc;
 import java.nio.ByteBuffer;
 
 public class MaterialManager {
-	public static final int WATER = 4;
+	public static class MaterialType {
+		public const int NONE = 0;
+		public const int SPECULAR = 1;
+		public const int LIQUID = 2;
+		public const int UNDERWATER = 3;
+		public const int WATER = 4;
+		public const int WATERFALL = 5;
+		public const int UNLIT = 6;
+	}
 
 	@OriginalMember(owner = "client!dl", name = "c", descriptor = "I")
 	public static int currentType = 0;
@@ -19,21 +27,21 @@ public class MaterialManager {
 	@OriginalMember(owner = "client!mh", name = "eb", descriptor = "I")
 	public static int currentArg = 0;
 	@OriginalMember(owner = "client!sj", name = "D", descriptor = "I")
-	public static int anInt5158;
+	public static int cameraPositionZ;
 	@OriginalMember(owner = "client!ej", name = "X", descriptor = "I")
-	public static int anInt1815;
+	public static int cameraYaw;
 	@OriginalMember(owner = "client!uj", name = "H", descriptor = "I")
-	public static int anInt5559;
+	public static int cameraPitch;
 	@OriginalMember(owner = "client!bb", name = "M", descriptor = "I")
-	public static int anInt406;
+	public static int cameraPositionX;
 	@OriginalMember(owner = "client!qc", name = "cb", descriptor = "I")
-	public static int anInt4675;
+	public static int cameraPositionY;
 	@OriginalMember(owner = "client!lm", name = "e", descriptor = "Z")
 	public static boolean allows3DTextureMapping;
 	@OriginalMember(owner = "client!lm", name = "a", descriptor = "[I")
 	public static int[] waterfallTextures = null;
 	@OriginalMember(owner = "client!lm", name = "b", descriptor = "[I")
-	public static int[] anIntArray341 = null;
+	public static int[] texture2dKeyframes = null;
 	@OriginalMember(owner = "client!lm", name = "f", descriptor = "I")
 	public static int texture3D = -1;
 	@OriginalMember(owner = "client!lm", name = "g", descriptor = "I")
@@ -45,8 +53,9 @@ public class MaterialManager {
 
 	@OriginalMember(owner = "client!cb", name = "b", descriptor = "(III)V")
 	public static void setMaterial(@OriginalArg(1) int arg, @OriginalArg(2) int type) {
-		if (type == 4 && !Preferences.highWaterDetail) {
-			type = 2;
+		// Replace water material with lower-res substitute if high water detail is disabled
+		if (type == MaterialType.WATER && !Preferences.highWaterDetail) {
+			type = MaterialType.LIQUID;
 			arg = 2;
 		}
 		if (currentType != type) {
@@ -102,11 +111,11 @@ public class MaterialManager {
 
 	@OriginalMember(owner = "client!ld", name = "a", descriptor = "(IIIIZI)V")
 	public static void method2731(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(5) int arg4) {
-		anInt5158 = arg1;
-		anInt1815 = arg4;
-		anInt5559 = arg0;
-		anInt406 = arg3;
-		anInt4675 = arg2;
+		cameraPositionZ = arg1;
+		cameraYaw = arg4;
+		cameraPitch = arg0;
+		cameraPositionX = arg3;
+		cameraPositionY = arg2;
 	}
 
 	@OriginalMember(owner = "client!lm", name = "a", descriptor = "()V")
@@ -141,10 +150,10 @@ public class MaterialManager {
 			texture3D = -1;
 			GlCleaner.onCardTexture -= textureBuffer.limit() * 2;
 		}
-		if (anIntArray341 != null) {
+		if (texture2dKeyframes != null) {
 			local4 = GlRenderer.gl;
-			local4.glDeleteTextures(64, anIntArray341, 0);
-			anIntArray341 = null;
+			local4.glDeleteTextures(64, texture2dKeyframes, 0);
+			texture2dKeyframes = null;
 			GlCleaner.onCardTexture -= textureBuffer.limit() * 2;
 		}
 		if (waterfallTextureId != -1) {
@@ -184,10 +193,10 @@ public class MaterialManager {
 			texture3D = local6[0];
 			GlCleaner.onCardTexture += textureBuffer.limit() * 2;
 		} else {
-			anIntArray341 = new int[64];
-			local1.glGenTextures(64, anIntArray341, 0);
+			texture2dKeyframes = new int[64];
+			local1.glGenTextures(64, texture2dKeyframes, 0);
 			for (@Pc(65) int local65 = 0; local65 < 64; local65++) {
-				GlRenderer.setTextureId(anIntArray341[local65]);
+				GlRenderer.setTextureId(texture2dKeyframes[local65]);
 				textureBuffer.position(local65 * 64 * 64 * 2);
 				local1.glTexImage2D(GL2.GL_TEXTURE_2D, 0, GL2.GL_LUMINANCE_ALPHA, 64, 64, 0, GL2.GL_LUMINANCE_ALPHA, GL2.GL_UNSIGNED_BYTE, textureBuffer);
 				local1.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MIN_FILTER, GL2.GL_LINEAR);

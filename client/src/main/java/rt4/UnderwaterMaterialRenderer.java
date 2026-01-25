@@ -186,9 +186,9 @@ public final class UnderwaterMaterialRenderer implements MaterialRenderer {
 			local1.glPushMatrix();
 			local1.glLoadIdentity();
 			local1.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-			local1.glRotatef((float) MaterialManager.anInt5559 * 360.0F / 2048.0F, 1.0F, 0.0F, 0.0F);
-			local1.glRotatef((float) MaterialManager.anInt1815 * 360.0F / 2048.0F, 0.0F, 1.0F, 0.0F);
-			local1.glTranslatef((float) -MaterialManager.anInt406, (float) -MaterialManager.anInt4675, (float) -MaterialManager.anInt5158);
+			local1.glRotatef((float) MaterialManager.cameraPitch * 360.0F / 2048.0F, 1.0F, 0.0F, 0.0F);
+			local1.glRotatef((float) MaterialManager.cameraYaw * 360.0F / 2048.0F, 0.0F, 1.0F, 0.0F);
+			local1.glTranslatef((float) -MaterialManager.cameraPositionX, (float) -MaterialManager.cameraPositionY, (float) -MaterialManager.cameraPositionZ);
 			if (aBoolean308) {
 				this.aFloatArray29[0] = 0.001F;
 				this.aFloatArray29[1] = 9.0E-4F;
@@ -203,7 +203,7 @@ public final class UnderwaterMaterialRenderer implements MaterialRenderer {
 				this.aFloatArray29[0] = 0.0F;
 				this.aFloatArray29[1] = 0.0F;
 				this.aFloatArray29[2] = 0.0F;
-				this.aFloatArray29[3] = (float) GlRenderer.anInt5323 * 0.005F;
+				this.aFloatArray29[3] = (float) GlRenderer.frameNumber * 0.005F;
 				local1.glTexGenfv(GL2.GL_R, GL2.GL_EYE_PLANE, this.aFloatArray29, 0);
 				local1.glActiveTexture(GL2.GL_TEXTURE2);
 			}

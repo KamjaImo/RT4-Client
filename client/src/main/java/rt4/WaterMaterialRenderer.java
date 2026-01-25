@@ -150,14 +150,14 @@ public final class WaterMaterialRenderer implements MaterialRenderer {
 		local1.glActiveTexture(GL2.GL_TEXTURE0);
 		if ((arg0 & 0x1) == 1) {
 			if (!MaterialManager.allows3DTextureMapping) {
-				GlRenderer.setTextureId(MaterialManager.anIntArray341[GlRenderer.anInt5323 * 64 / 100 % 64]);
-			} else if (this.anInt4442 != GlRenderer.anInt5323) {
+				GlRenderer.setTextureId(MaterialManager.texture2dKeyframes[GlRenderer.frameNumber * 64 / 100 % 64]);
+			} else if (this.anInt4442 != GlRenderer.frameNumber) {
 				this.aFloatArray23[0] = 0.0F;
 				this.aFloatArray23[1] = 0.0F;
 				this.aFloatArray23[2] = 0.0F;
-				this.aFloatArray23[3] = (float) GlRenderer.anInt5323 * 0.005F;
+				this.aFloatArray23[3] = (float) GlRenderer.frameNumber * 0.005F;
 				local1.glTexGenfv(GL2.GL_R, GL2.GL_OBJECT_PLANE, this.aFloatArray23, 0);
-				this.anInt4442 = GlRenderer.anInt5323;
+				this.anInt4442 = GlRenderer.frameNumber;
 			}
 		} else if (MaterialManager.allows3DTextureMapping) {
 			this.aFloatArray23[0] = 0.0F;
@@ -166,7 +166,7 @@ public final class WaterMaterialRenderer implements MaterialRenderer {
 			this.aFloatArray23[3] = 0.0F;
 			local1.glTexGenfv(GL2.GL_R, GL2.GL_OBJECT_PLANE, this.aFloatArray23, 0);
 		} else {
-			GlRenderer.setTextureId(MaterialManager.anIntArray341[0]);
+			GlRenderer.setTextureId(MaterialManager.texture2dKeyframes[0]);
 		}
 	}
 
@@ -179,7 +179,7 @@ public final class WaterMaterialRenderer implements MaterialRenderer {
 		GlRenderer.resetTextureMatrix();
 		local1.glCallList(this.anInt4440);
 		@Pc(12) float local12 = 2662.4001F;
-		local12 += (float) (MaterialManager.anInt5559 - 128) * 0.5F;
+		local12 += (float) (MaterialManager.cameraPitch - 128) * 0.5F;
 		float max = (float) GlobalConfig.VIEW_DISTANCE - GlobalConfig.VIEW_FADE_DISTANCE;
 		if (local12 >= max) {
 			local12 = max - 1.0f;
