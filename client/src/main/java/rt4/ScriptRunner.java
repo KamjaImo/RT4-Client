@@ -279,7 +279,7 @@ public final class ScriptRunner {
 				local248 = Camera.aFloat15 * 360.0F / 6.2831855F;
 				local253 = Camera.aFloat10 * 360.0F / 6.2831855F;
 			}
-			GlRenderer.method4171(x, y, width, height, width / 2 + x, y - -(height / 2), local248, local253, anInt5029, anInt5029);
+			GlRenderer.setupPerspectiveProjection(x, y, width, height, width / 2 + x, y - -(height / 2), local248, local253, anInt5029, anInt5029);
 		} else {
 			SoftwareRaster.setClip(x, y, width + x, height + y);
 			Rasteriser.prepare();

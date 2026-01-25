@@ -950,7 +950,7 @@ public class Cs1ScriptRunner {
 													if (component.modelOrtho) {
 														GlRenderer.method4182(local556, objId, component.modelZoom, component.aShort11, color, cardMemory);
 													} else {
-														GlRenderer.method4148(local556, objId, color, cardMemory);
+														GlRenderer.setupPerspectiveProjection(local556, objId, color, cardMemory);
 														GlRenderer.method4152(component.aShort10, (float) component.aShort11 * 1.5F);
 													}
 													GlRenderer.restoreLighting();

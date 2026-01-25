@@ -19,7 +19,7 @@ public final class GlRenderer {
 	private static String vendor;
 
 	@OriginalMember(owner = "client!tf", name = "b", descriptor = "Ljava/lang/String;")
-	private static String renderer;
+	private static String rendererName;
 
 	@OriginalMember(owner = "client!tf", name = "c", descriptor = "F")
 	private static float aFloat30;
@@ -126,15 +126,15 @@ public final class GlRenderer {
 	private static JAWTWindow window;
 
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(Ljava/lang/String;)Lclient!na;")
-	private static JagString method4147(@OriginalArg(0) String arg0) {
-		@Pc(3) byte[] local3;
-		local3 = arg0.getBytes(StandardCharsets.ISO_8859_1);
-		return JagString.toJagString(local3, local3.length, 0);
+	private static JagString toJagString(@OriginalArg(0) String string) {
+		@Pc(3) byte[] rawBytes;
+		rawBytes = string.getBytes(StandardCharsets.ISO_8859_1);
+		return JagString.toJagString(rawBytes, rawBytes.length, 0);
 	}
 
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(IIII)V")
-	public static void method4148(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3) {
-		method4171(0, 0, canvasWidth, canvasHeight, arg0, arg1, 0.0F, 0.0F, arg2, arg3);
+	public static void setupPerspectiveProjection(@OriginalArg(0) int x, @OriginalArg(1) int y, @OriginalArg(2) int zoomX, @OriginalArg(3) int zoomY) {
+		setupPerspectiveProjection(0, 0, canvasWidth, canvasHeight, x, y, 0.0F, 0.0F, zoomX, zoomY);
 	}
 
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "()V")
@@ -297,24 +297,44 @@ public final class GlRenderer {
 		method4152(3000.0F, arg0 * 1.5F);
 	}
 
+	// This function copies the contents of the front framebuffer onto the screen.
+	// It is the final operation that puts pixels onto the screen,
+	// but it does not compute any graphics on its own.
 	@OriginalMember(owner = "client!tf", name = "h", descriptor = "()V")
 	public static void draw() {
-		@Pc(2) int[] local2 = new int[2];
-		gl.glGetIntegerv(GL2.GL_DRAW_BUFFER, local2, 0);
-		gl.glGetIntegerv(GL2.GL_READ_BUFFER, local2, 1);
+		// Store previous values for active draw/read buffer targets.
+		@Pc(2) int[] previousTargets = new int[2];
+		gl.glGetIntegerv(GL2.GL_DRAW_BUFFER, previousTargets, 0);
+		gl.glGetIntegerv(GL2.GL_READ_BUFFER, previousTargets, 1);
+
+		// Temporarily set all draw operations to the back buffer,
+		// presumably so they don't interfere with the current draw operation.
 		gl.glDrawBuffer(GL2.GL_BACK_LEFT);
+
+		// Read from the front buffer, since we will be copying it to the screen.
 		gl.glReadBuffer(GL2.GL_FRONT_LEFT);
+
+		// Disable textures, or else they'll be redrawn atop.
 		setTextureId(-1);
+
+		// Store previous values for flags.
 		gl.glPushAttrib(GL2.GL_ENABLE_BIT);
+
+		// Disable fog, blending effects, depth testing, and alpha testing for this draw operation.
+		// We don't need these because we are just copying directly from the read buffer.
 		gl.glDisable(GL2.GL_FOG);
 		gl.glDisable(GL2.GL_BLEND);
 		gl.glDisable(GL2.GL_DEPTH_TEST);
 		gl.glDisable(GL2.GL_ALPHA_TEST);
+
+		// Copy all visible pixels from front buffer to the screen.
 		gl.glRasterPos2i(0, 0);
 		gl.glCopyPixels(0, 0, canvasWidth, canvasHeight, GL2.GL_COLOR);
+
+		// Restore previous state (flags and buffer targets).
 		gl.glPopAttrib();
-		gl.glDrawBuffer(local2[0]);
-		gl.glReadBuffer(local2[1]);
+		gl.glDrawBuffer(previousTargets[0]);
+		gl.glReadBuffer(previousTargets[1]);
 	}
 
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(Ljava/awt/Canvas;)V")
@@ -388,7 +408,7 @@ public final class GlRenderer {
 	private static int checkContext() {
 		@Pc(1) int result = 0;
 		vendor = gl.glGetString(GL2.GL_VENDOR);
-		renderer = gl.glGetString(GL2.GL_RENDERER);
+		rendererName = gl.glGetString(GL2.GL_RENDERER);
 		@Pc(12) String vendor = GlRenderer.vendor.toLowerCase();
 		if (vendor.contains("microsoft")) {
 			result = 1;
@@ -437,7 +457,7 @@ public final class GlRenderer {
 		arbTextureCubeMapSupported = gl.isExtensionAvailable("GL_ARB_texture_cube_map");
 		arbVertexProgramSupported = gl.isExtensionAvailable("GL_ARB_vertex_program");
 		extTexture3dSupported = gl.isExtensionAvailable("GL_EXT_texture3D");
-		@Pc(176) JagString renderer = method4147(GlRenderer.renderer).toLowerCase();
+		@Pc(176) JagString renderer = toJagString(GlRenderer.rendererName).toLowerCase();
 		if (renderer.indexOf(RADEON) != -1) {
 			@Pc(184) int v = 0;
 			@Pc(193) JagString[] rendererParts = renderer.replaceSlashWithSpace().split(32);
@@ -526,30 +546,63 @@ public final class GlRenderer {
 		textureMatrixModified = true;
 	}
 
+	// Sets up a projection matrix with a (strange) perspective projection applied,
+	// then applies camera rotation transformations to the model/view matrices.
+	//
+	// The end result of this is that subsequent draw operations will be from the perspective
+	// of the camera, based on the camera position/rotation/zoom parameters specified,
+	// and that perspective will be computed by OpenGL (as opposed to displaying an orthogonal view).
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(IIIIIIFFII)V")
-	public static void method4171(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(6) float arg6, @OriginalArg(7) float arg7, @OriginalArg(8) int arg8, @OriginalArg(9) int arg9) {
-		@Pc(7) int local7 = (arg0 - arg4 << 8) / arg8;
-		@Pc(17) int local17 = (arg0 + arg2 - arg4 << 8) / arg8;
-		@Pc(25) int local25 = (arg1 - arg5 << 8) / arg9;
-		@Pc(35) int local35 = (arg1 + arg3 - arg5 << 8) / arg9;
+	public static void setupPerspectiveProjection(
+		@OriginalArg(0) int x, 
+		@OriginalArg(1) int y, 
+		@OriginalArg(2) int width, 
+		@OriginalArg(3) int height, 
+		@OriginalArg(4) int offsetX, 
+		@OriginalArg(5) int offsetY, 
+		@OriginalArg(6) float pitch, 
+		@OriginalArg(7) float yaw, 
+		@OriginalArg(8) int zoomX, 
+		@OriginalArg(9) int zoomY) 
+	{
+		// Compute bounds of screen.
+		@Pc(7) int screenLowerX = (x - offsetX << 8) / zoomX;
+		@Pc(17) int screenUpperX = (x + width - offsetX << 8) / zoomX;
+		@Pc(25) int screenLowerY = (y - offsetY << 8) / zoomY;
+		@Pc(35) int screenUpperY = (y + height - offsetY << 8) / zoomY;
+
+		// Create projection matrix.
 		gl.glMatrixMode(GL2.GL_PROJECTION);
 		gl.glLoadIdentity();
-		method4175((float) local7 * aFloat34, (float) local17 * aFloat34, (float) -local35 * aFloat34, (float) -local25 * aFloat34, 50.0F, (float) GlobalConfig.VIEW_DISTANCE);
-		setViewportBounds(arg0, canvasHeight - arg1 - arg3, arg2, arg3);
+		loadProjectionMatrix((float) screenLowerX * aFloat34, (float) screenUpperX * aFloat34, (float) -screenUpperY * aFloat34, (float) -screenLowerY * aFloat34, 50.0F, (float) GlobalConfig.VIEW_DISTANCE);
+
+		// Resize the viewport to match.
+		setViewportBounds(x, canvasHeight - y - height, width, height);
+
+		// Create model and view matrices.
+		// For now this seems to only apply the view matrix - model transforms might happen later.
 		gl.glMatrixMode(GL2.GL_MODELVIEW);
 		gl.glLoadIdentity();
+
+		// Rotate 180 degrees about the X axis.
+		// I think this might be to point the camera down, e.g. if default state is pointing straight up.
 		gl.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-		if (arg6 != 0.0F) {
-			gl.glRotatef(arg6, 1.0F, 0.0F, 0.0F);
+
+		// Apply additional rotations from the camera.
+		if (pitch != 0.0F) {
+			gl.glRotatef(pitch, 1.0F, 0.0F, 0.0F);
 		}
-		if (arg7 != 0.0F) {
-			gl.glRotatef(arg7, 0.0F, 1.0F, 0.0F);
+		if (yaw != 0.0F) {
+			gl.glRotatef(yaw, 0.0F, 1.0F, 0.0F);
 		}
+
 		aBoolean266 = false;
-		Rasteriser.screenLowerX = local7;
-		Rasteriser.screenUpperX = local17;
-		Rasteriser.screenLowerY = local25;
-		Rasteriser.screenUpperY = local35;
+
+		// Save computed screen bounds for later.
+		Rasteriser.screenLowerX = screenLowerX;
+		Rasteriser.screenUpperX = screenUpperX;
+		Rasteriser.screenLowerY = screenLowerY;
+		Rasteriser.screenUpperY = screenUpperY;
 	}
 
 	@OriginalMember(owner = "client!tf", name = "d", descriptor = "(Z)V")
@@ -593,26 +646,57 @@ public final class GlRenderer {
 		textureCombineAlphaMode = mode;
 	}
 
+	// Generates and loads a projection matrix for use in subsequent projection operations.
+	// This projection matrix seems similar to a typical perspective projection matrix, 
+	// but with some differences that are unclear to me.
+	//
+	// Typical perspective projection matrix:
+	// [ f 0 0 0 ] [ 0 f 0 0 ] [ 0 0 (zfar+znear)/(znear-zfar) 2(zfar*znear)/(znear-zfar) ] [ 0 0 -1 0 ]
+	// 
+	// Below matrix:
+	// [ f 0 0 0 ] [ 0 f 0 0 ] [ x y -(zfar+znear)/(zfar-znear) -1 ] [ 0 0 -2(zfar*znear)/(zfar-znear) 0 ]
+	//
+	// Where f is focal length, znear/zfar are near/far z planes, and x/y are unknown computations based on x/y dimensions of the screen.
+	//
+	// The result of this "hand-rolled" projection matrix is likely that perspective is just a little bit off
+	// from game industry standard, and thus models will look a bit funny if loaded into Blender,
+	// or perhaps if rendered in the RT4 client with a camera position that isn't "just so".
+	// This is pure speculation at this time, however.
 	@OriginalMember(owner = "client!tf", name = "a", descriptor = "(FFFFFF)V")
-	private static void method4175(@OriginalArg(0) float arg0, @OriginalArg(1) float arg1, @OriginalArg(2) float arg2, @OriginalArg(3) float arg3, @OriginalArg(4) float arg4, @OriginalArg(5) float arg5) {
-		@Pc(3) float local3 = arg4 * 2.0F;
+	private static void loadProjectionMatrix(
+		@OriginalArg(0) float arg0, // screenLowerX * factor
+		@OriginalArg(1) float arg1, // screenUpperX * factor
+		@OriginalArg(2) float arg2, // -screenLowerY * factor
+		@OriginalArg(3) float arg3, // -screenUpperY * factor
+		@OriginalArg(4) float zNear, // 50
+		@OriginalArg(5) float zFar) // GlobalConfig.VIEW_DISTANCE
+	{
+		@Pc(3) float local3 = zNear * 2.0F; // 100
+
+		// Row 1
 		matrix[0] = local3 / (arg1 - arg0);
-		matrix[1] = 0.0F;
-		matrix[2] = 0.0F;
+		matrix[1] = 0.0F; 
+		matrix[2] = 0.0F; 
 		matrix[3] = 0.0F;
+		// Row 2
 		matrix[4] = 0.0F;
 		matrix[5] = local3 / (arg3 - arg2);
 		matrix[6] = 0.0F;
 		matrix[7] = 0.0F;
+		// Row 3
 		matrix[8] = (arg1 + arg0) / (arg1 - arg0);
 		matrix[9] = (arg3 + arg2) / (arg3 - arg2);
-		matrix[10] = aFloat30 = -(arg5 + arg4) / (arg5 - arg4);
+		matrix[10] = aFloat30 = -(zFar + zNear) / (zFar - zNear);
 		matrix[11] = -1.0F;
+		// Row 4
 		matrix[12] = 0.0F;
 		matrix[13] = 0.0F;
-		matrix[14] = aFloat32 = -(local3 * arg5) / (arg5 - arg4);
+		matrix[14] = aFloat32 = -(local3 * zFar) / (zFar - zNear);
 		matrix[15] = 0.0F;
+
+		// Load the resulting matrix.
 		gl.glLoadMatrixf(matrix, 0);
+
 		aFloat33 = 0.0F;
 		aFloat31 = 0.0F;
 	}
@@ -626,17 +710,28 @@ public final class GlRenderer {
 
 	@OriginalMember(owner = "client!tf", name = "c", descriptor = "(I)V")
 	public static void setTextureId(@OriginalArg(0) int id) {
+		// Exit early if requested texture is already current.
 		if (id == textureId) {
 			return;
 		}
+
+		// Texture id -1 means no texture should be rendered.
 		if (id == -1) {
 			gl.glDisable(GL2.GL_TEXTURE_2D);
-		} else {
+		} 
+		
+		// All other textures are valid.
+		else {
+			// If texture rendering was previously disabled, re-enable it for the new texture.
 			if (textureId == -1) {
 				gl.glEnable(GL2.GL_TEXTURE_2D);
 			}
+
+			// Bind the requested texture id.
 			gl.glBindTexture(GL2.GL_TEXTURE_2D, id);
 		}
+
+		// Save the currently-bound texture id.
 		textureId = id;
 	}
 
