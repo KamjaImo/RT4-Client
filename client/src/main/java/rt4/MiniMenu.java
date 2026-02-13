@@ -559,7 +559,7 @@ public class MiniMenu {
 		}
 		@Pc(560) boolean local560;
 		if (actionCode == OBJSTACK_ACTION_1) {
-			if (client.game == 1) {
+			if (client.debug == 1) {
 				PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 1, false, 0, local15, 1, 0, 2, local19, PlayerList.self.movementQueueX[0]);
 			} else {
 				local560 = PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 0, false, 0, local15, 0, 0, 2, local19, PlayerList.self.movementQueueX[0]);
@@ -729,7 +729,7 @@ public class MiniMenu {
 			anInt5444 = local15;
 		}
 		if (actionCode == UNKNOWN_21) {
-			if (client.game == 1) {
+			if (client.debug == 1) {
 				PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 1, false, 0, local15, 1, 0, 2, local19, PlayerList.self.movementQueueX[0]);
 			} else {
 				local560 = PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 0, false, 0, local15, 0, 0, 2, local19, PlayerList.self.movementQueueX[0]);
@@ -813,7 +813,7 @@ public class MiniMenu {
 			}
 		}
 		if (actionCode == PLAYER_ACTION_BLOCK) {
-			if (client.game == 1) {
+			if (client.debug == 1) {
 				PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 1, false, 0, local15, 1, 0, 2, local19, PlayerList.self.movementQueueX[0]);
 			} else {
 				local560 = PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 0, false, 0, local15, 0, 0, 2, local19, PlayerList.self.movementQueueX[0]);
@@ -962,7 +962,7 @@ public class MiniMenu {
 			anInt5444 = local15;
 		}
 		if (actionCode == UNKNOWN_24) {
-			if (client.game == 1) {
+			if (client.debug == 1) {
 				PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 1, false, 0, local15, 1, 0, 2, local19, PlayerList.self.movementQueueX[0]);
 			} else {
 				local560 = PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 0, false, 0, local15, 0, 0, 2, local19, PlayerList.self.movementQueueX[0]);
@@ -1107,7 +1107,7 @@ public class MiniMenu {
 			}
 		}
 		if (actionCode == OBJSTACK_ACTION_2) {
-			if (client.game == 1) {
+			if (client.debug == 1) {
 				PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 1, false, 0, local15, 1, 0, 2, local19, PlayerList.self.movementQueueX[0]);
 			} else {
 				local560 = PathFinder.findPath(PlayerList.self.movementQueueZ[0], 0, 0, false, 0, local15, 0, 0, 2, local19, PlayerList.self.movementQueueX[0]);
@@ -1193,7 +1193,7 @@ public class MiniMenu {
 					add(anInt5393, 0L, aClass100_961, local33, (short) 11, aClass100_545, x);
 				}
 			} else {
-				if (client.game == 1) {
+				if (client.debug == 1) {
 					add(-1, 0L, JagString.EMPTY, local33, (short) 36, LocalizedText.FACEHERE, x);
 				}
 				add(-1, 0L, JagString.EMPTY, local33, (short) 60, walkText, x);
@@ -1414,7 +1414,7 @@ public class MiniMenu {
 		}
 		@Pc(35) JagString local35 = arg0.name;
 		if (arg0.combatLevel != 0) {
-			@Pc(47) JagString local47 = client.game == 1 ? LocalizedText.RATING : LocalizedText.LEVEL;
+			@Pc(47) JagString local47 = client.debug == 1 ? LocalizedText.RATING : LocalizedText.LEVEL;
 			local35 = JagString.concatenate(new JagString[]{local35, getCombatLevelColor(arg0.combatLevel, PlayerList.self.combatLevel), OPEN_PARENTHESIS, local47, JagString.parseInt(arg0.combatLevel), CLOSE_PARENTHESIS});
 		}
 		if (anInt5014 == 1) {
@@ -1432,7 +1432,7 @@ public class MiniMenu {
 			@Pc(140) int local140;
 			if (local129 != null) {
 				for (local140 = 4; local140 >= 0; local140--) {
-					if (local129[local140] != null && (client.game != 0 || !local129[local140].equalsIgnoreCase(LocalizedText.ATTACK))) {
+					if (local129[local140] != null && (client.debug != 0 || !local129[local140].equalsIgnoreCase(LocalizedText.ATTACK))) {
 						@Pc(161) byte local161 = 0;
 						if (local140 == 0) {
 							local161 = 17;
@@ -1460,7 +1460,7 @@ public class MiniMenu {
 					}
 				}
 			}
-			if (client.game == 0 && local129 != null) {
+			if (client.debug == 0 && local129 != null) {
 				for (local140 = 4; local140 >= 0; local140--) {
 					if (local129[local140] != null && local129[local140].equalsIgnoreCase(LocalizedText.ATTACK)) {
 						@Pc(271) short local271 = 0;
@@ -1514,7 +1514,7 @@ public class MiniMenu {
 					markCombatDifference = false;
 				}
 			}
-			@Pc(95) JagString local95 = client.game == 1 ? LocalizedText.RATING : LocalizedText.LEVEL;
+			@Pc(95) JagString local95 = client.debug == 1 ? LocalizedText.RATING : LocalizedText.LEVEL;
 			if (other.combatLevelWithSummoning > other.combatLevel) {
 				string = JagString.concatenate(new JagString[]{other.getName(), markCombatDifference ? getCombatLevelColor(other.combatLevel, PlayerList.self.combatLevel) : COLOR_WHITE, OPEN_PARENTHESIS, local95, JagString.parseInt(other.combatLevel), PLUS, JagString.parseInt(other.combatLevelWithSummoning - other.combatLevel), CLOSE_PARENTHESIS});
 			} else {
@@ -1530,7 +1530,7 @@ public class MiniMenu {
 			for (local275 = 7; local275 >= 0; local275--) {
 				if (Player.options[local275] != null) {
 					@Pc(291) short local291 = 0;
-					if (client.game == 0 && Player.options[local275].equalsIgnoreCase(LocalizedText.ATTACK)) {
+					if (client.debug == 0 && Player.options[local275].equalsIgnoreCase(LocalizedText.ATTACK)) {
 						if (other.combatLevel > PlayerList.self.combatLevel) {
 							local291 = 2000;
 						}

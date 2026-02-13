@@ -14,57 +14,191 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
 
+// This is the start point of the game application.
+// The client is responsible for a lot of things, including:
+// - Pre-launch validation checks
+// - Parsing and handling of client settings
+// - Initialization of the cache and networking queue
+// - Launching of the pre-login loading screen
+// - Marshalling of threads to their corresponding asynchronous loops
 @OriginalClass("client!client")
 public final class client extends GameShell {
 
-	@OriginalMember(owner = "client!dk", name = "j", descriptor = "[Lclient!en;")
-	public static final BufferedFile[] cacheIndexes = new BufferedFile[28];
-	@OriginalMember(owner = "client!wa", name = "Eb", descriptor = "[Lclient!bg;")
-	public static final Js5CachedResourceProvider[] js5Providers = new Js5CachedResourceProvider[28];
-	@OriginalMember(owner = "client!d", name = "S", descriptor = "Ljava/util/Random;")
-	public static final Random aRandom1 = new Random();
-	@OriginalMember(owner = "client!nh", name = "fb", descriptor = "[I")
-	public static final int[] JS5_ARCHIVE_WEIGHTS = new int[]{4, 4, 1, 2, 6, 4, 2, 49, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-	@OriginalMember(owner = "client!si", name = "gb", descriptor = "Lclient!na;")
-	public static final JagString LINE_BREAK = JagString.parse("<br>(X");
-	@OriginalMember(owner = "client!sg", name = "e", descriptor = "Lclient!na;")
-	public static final JagString SETTINGS = JagString.parse("settings");
-	@OriginalMember(owner = "client!km", name = "Mc", descriptor = "Lclient!na;")
-	public static final JagString LOGINSCREEN = JagString.parse("loginscreen");
-	@OriginalMember(owner = "client!qk", name = "a", descriptor = "Lclient!na;")
-	public static final JagString aClass100_899 = JagString.parse("0(U");
-	@OriginalMember(owner = "client!uh", name = "Y", descriptor = "Lclient!na;")
-	public static final JagString HUFFMAN_GROUP = JagString.parse("huffman");
-	@OriginalMember(owner = "client!nb", name = "n", descriptor = "Lclient!na;")
-	public static final JagString DETAILS = JagString.parse("details");
-	@OriginalMember(owner = "client!qk", name = "b", descriptor = "Lclient!na;")
-	public static final JagString TB_REFRESH = JagString.parse("tbrefresh");
-	@OriginalMember(owner = "client!al", name = "r", descriptor = "Lclient!na;")
-	public static final JagString SHOW_VIDEO_AD = JagString.parse("showVideoAd");
-	@OriginalMember(owner = "client!a", name = "e", descriptor = "Lclient!na;")
-	public static final JagString TITLE_SONG = JagString.parse("scape main");
-	@OriginalMember(owner = "client!jm", name = "A", descriptor = "Lclient!na;")
-	static final JagString EMPTY_STRING = JagString.parse("");
+	// LOADING PROCESS
+	// The game client loads in a series of numbered stages that run sequentially
+	// until the game is fully loaded and asynchronous processing is fully online.
+
+	// Text displayed in the loading bar, below the percentage indicator.
 	@OriginalMember(owner = "client!jm", name = "z", descriptor = "Lclient!na;")
 	public static JagString mainLoadSecondaryText = EMPTY_STRING;
+
+	// CACHE
+	// The game's cache is stored in 31 files on the user's disk:
+	// - 1 master index (`main_file_cache.idx255`)
+	// - 28 index files (`main_file_cache.idx0` to `main_file_cache.idx27`).
+	// - 1 data file (`main_file_cache.dat2`)
+	// - 1 UID file (`random.dat`)
+	// The specific file format of each is unique to RuneScape, and the individual files are tightly coupled with each other.
+
+	// INDEX FILES
+	// Index files do not contain game data, but rather point to specific pieces of game data within the larger data file.
+	// Each index refers to a specific type of data (for example, `main_file_cache.idx7` contains references to model data).
+
+	// List of file handles for each of the index files on the user's disk.
+	@OriginalMember(owner = "client!dk", name = "j", descriptor = "[Lclient!en;")
+	public static final BufferedFile[] cacheIndexes = new BufferedFile[28];
+
+	// List of resource providers for each of the index files.
+	// Resource providers are responsible for downloading cache data from the server so it can be saved to disk.
+	@OriginalMember(owner = "client!wa", name = "Eb", descriptor = "[Lclient!bg;")
+	public static final Js5CachedResourceProvider[] js5Providers = new Js5CachedResourceProvider[28];
+
+	// List of weights for adjusting the loading bar while downloading each of the index files.
+	// Some index files are large, so a linear progress bar doesn't accurately reflect the overhead of downloading the file.
+	// To accommodate that, the loading bar is manually adjusted based on the weight in this array, 
+	// where a higher weight means a fuller loading bar relative to the number of resources parsed out of the file.
+	@OriginalMember(owner = "client!nh", name = "fb", descriptor = "[I")
+	public static final int[] JS5_ARCHIVE_WEIGHTS = new int[]{4, 4, 1, 2, 6, 4, 2, 49, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+	// JS5 ARCHIVES
+	// In order to extract any resource, information from the master index, index, and data files must be combined
+	// into a format known as a Js5 archive. One archive contains all of the resources defined within a single index file,
+	// bundled together with the concrete data in the data file. 
+	// Js5 archives typically require substantial unpacking and post-processing before their contents are usable.
 	@OriginalMember(owner = "client!sg", name = "k", descriptor = "Lclient!ve;")
 	public static Js5 js5Archive23;
+
+	// RESOURCES
+	// Each individual piece of game data is referred to as a "resource".
+	// (Sometimes they are also referred to as 'files', not to be confused for files on disk.)
+	// A single Js5 archive contains one or more 'groups', and each group contains one or more resources.
+	// Some specific resources are referenced in this class as part of the loading screen and early initialization,
+	// and those resource names are defined below.
+
+	// The login screen interface.
+	@OriginalMember(owner = "client!km", name = "Mc", descriptor = "Lclient!na;")
+	public static final JagString LOGINSCREEN = JagString.parse("loginscreen");
+
+	// The title song "Scape Main", which plays over the title screen.
+	@OriginalMember(owner = "client!a", name = "e", descriptor = "Lclient!na;")
+	public static final JagString TITLE_SONG = JagString.parse("scape main");
+
+	// The codec data used to build Huffman trees.
+	// Huffman coding is used for compression of text resources - see HuffmanCodec.java for details.
+	@OriginalMember(owner = "client!uh", name = "Y", descriptor = "Lclient!na;")
+	public static final JagString HUFFMAN_GROUP = JagString.parse("huffman");
+
+	// The group containing map data for all the maps in the game.
+	// These must be pre-loaded on startup.
+	@OriginalMember(owner = "client!nb", name = "n", descriptor = "Lclient!na;")
+	public static final JagString MAPS_GROUP = JagString.parse("details");
+
+	// NETWORKING
+	// The game client communicates with the game server primarily through TCP socket connections.
+	// Requests are delivered to the server in a FIFO queue, and responses are processed asynchronously as they are received.
+
+	// Id of the world to connect to.
+	// Each game world has its own dedicated connection, with the port number derived from the world id.
+	// When the user launches the game, the client picks a world to connect to,
+	// and from there the user can change worlds if desired to disconnect and reconnect to a new server.
 	@OriginalMember(owner = "client!pb", name = "Q", descriptor = "I")
 	public static int worldListId = 1;
-	@OriginalMember(owner = "client!gj", name = "b", descriptor = "I")
-	public static int runEnv = RunEnvs.prod;
-	@OriginalMember(owner = "client!gg", name = "U", descriptor = "I")
-	public static int runMode = RunModes.live;
-	@OriginalMember(owner = "client!ud", name = "S", descriptor = "Z")
-	public static boolean advertSuppressed = false;
+
+	// STRING CONSTANTS
+	// During early initialization, the game client does not have access to text resources within the cache files,
+	// and is instead forced to hard-code specific strings into the client.
+	// Below are the constants used for this purpose.
+	// Note that some strings have special encodings - see JagString for notes on these.
+	@OriginalMember(owner = "client!jm", name = "A", descriptor = "Lclient!na;")
+	static final JagString EMPTY_STRING = JagString.parse("");
+	@OriginalMember(owner = "client!si", name = "gb", descriptor = "Lclient!na;")
+	public static final JagString LINE_BREAK = JagString.parse("<br>(X");
+	@OriginalMember(owner = "client!qk", name = "a", descriptor = "Lclient!na;")
+	public static final JagString aClass100_899 = JagString.parse("0(U");
+
+	// DISCONTINUED BEHAVIOR
+
+	// APPLET PARAMETERS
+	// This version of the RuneScape client was designed to be run in the browser as an embedded Java applet.
+	// Applets have many capabilities, among them being the ability to define "applet parameters"
+	// that could be set on page load and retrieved by the applet at runtime, allowing user preferences to be 
+	// saved and retrieved by the game without needing to interact with the browser at all.
+	// The RT4 client has been adapted to run standalone, and as such, these parameters no longer have any meaning,
+	// but they are listed here for historical posterity.
+	// Each parameter has a string key and a value parsed from a string.
+
+	// The language parameter would have contained an identifier for the user's preferred language.
+	// At the time, RuneScape had translations for English, French, and German.
 	@OriginalMember(owner = "client!lb", name = "v", descriptor = "I")
 	public static int language = 0;
-	@OriginalMember(owner = "client!t", name = "x", descriptor = "Z")
-	public static boolean objectTag = false;
+
+	// The settings parameter would have contained a unique key identifying the user's settings.
+	// This key would be passed around in the URL of the applet, presumably to allow the client to 
+	// keep track of a user when they hopped worlds, clicked the "buy membership" button, 
+	// or took any other action that initiated a new HTTP request that would otherwise lose that state.
+	@OriginalMember(owner = "client!sg", name = "e", descriptor = "Lclient!na;")
+	public static final JagString SETTINGS = JagString.parse("settings");
+	public static JagString settings = null;
+	@OriginalMember(owner = "client!rh", name = "j", descriptor = "Lclient!client;")
+
+	// The advertsuppressed parameter would have indicated whether or not to suppress banner ads on the page,
+	// e.g. if the user is a paying member or underage.
+	@OriginalMember(owner = "client!ud", name = "S", descriptor = "Z")
+	public static boolean advertSuppressed = false;
+
+	// The js parameter would have indicated whether the user's browser was capable of serving Javascript video ads.
+	// Despite its name, it does not seem to toggle ALL Javascript behavior, just the video ads.
 	@OriginalMember(owner = "client!lk", name = "U", descriptor = "Z")
 	public static boolean javaScript = false;
+
+	// The objecttag parameter was passed around via the applet URLs, but its function must have been internal,
+	// as it doesn't seem to be used within the client itself.
+	@OriginalMember(owner = "client!t", name = "x", descriptor = "Z")
+	public static boolean objectTag = false;
+
+	// AD-HOC JAVASCRIPT CALLS
+	// Because applets could run in the browser, they had the ability to interact with the DOM,
+	// including execution of custom Javascript.
+	// The primary use for this would have been to display ads on free-to-play worlds.
+	// Below are the Javascript functions that could be called (in the RT4 client, they are all no-ops).
+
+	// Top-banner refresh, presumably to refresh the ad banner placed above the game window in free-to-play worlds.
+	@OriginalMember(owner = "client!qk", name = "b", descriptor = "Lclient!na;")
+	public static final JagString TB_REFRESH = JagString.parse("tbrefresh");
+
+	// Shows a full-screen video ad. This was used as an additional monetization scheme for a brief period,
+	// wherein players could opt into watching a video ad in exchange for RuneCoins or Squeal of Fortune keys.
+	// These prizes weren't available as of 2009, so I'm either forgetting something (FunOrb points, perhaps?)
+	// or this function exists as a piece of plumbing that wasn't yet hooked up to anything functional.
+	@OriginalMember(owner = "client!al", name = "r", descriptor = "Lclient!na;")
+	public static final JagString SHOW_VIDEO_AD = JagString.parse("showVideoAd");
+
+	// COMMAND-LINE ARGUMENTS
+	// The game client has support for command-line arguments, despite the fact that no native desktop application
+	// existed for it at the time. Presumably these were used internally for development, in much the same way
+	// that the RT4 client is launched today.
+
+	// Runtime environment (QA or Prod).
+	// The RT4 client has added a third runtime environment, Decomp, for overriding behaviors that 
+	// interfere with the client's function when run in an unofficial capacity.
+	@OriginalMember(owner = "client!gj", name = "b", descriptor = "I")
+	public static int runEnv = RunEnvs.prod;
+
+	// Runtime mode (Live, RC, or WIP).
+	// This would presumably be used to produce development builds of the game, perhaps with debug logs
+	// or test data bundled into the cache files.
+	@OriginalMember(owner = "client!gg", name = "U", descriptor = "I")
+	public static int runMode = RunModes.live;
+
+	// Debug mode (0 for disabled, 1 for enabled).
+	// This affects various things, such as rendering and shift-click behavior.
 	@OriginalMember(owner = "client!vk", name = "n", descriptor = "I")
-	public static int game = 0;
+	public static int debug = 0;
+
+	// UNKNOWNS (TODO)
+	@OriginalMember(owner = "client!d", name = "S", descriptor = "Ljava/util/Random;")
+	public static final Random aRandom1 = new Random();
+
 	@OriginalMember(owner = "client!wk", name = "w", descriptor = "I")
 	public static int country;
 	@OriginalMember(owner = "client!od", name = "n", descriptor = "Z")
@@ -72,8 +206,6 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!qi", name = "r", descriptor = "I")
 	public static int affiliate = 0;
 	@OriginalMember(owner = "client!dk", name = "h", descriptor = "Lclient!na;")
-	public static JagString settings = null;
-	@OriginalMember(owner = "client!rh", name = "j", descriptor = "Lclient!client;")
 	public static client instance;
 	@OriginalMember(owner = "client!ba", name = "D", descriptor = "Lclient!vh;")
 	public static AudioChannel musicChannel;
@@ -300,9 +432,9 @@ public final class client extends GameShell {
 
 			// Fourth arg toggles some custom plugin settings (I guess for debug purposes)
 			if (args[3].equals("game0")) {
-				game = 0;
+				debug = 0;
 			} else if (args[3].equals("game1")) {
-				game = 1;
+				debug = 1;
 			} else {
 				printUsage("game");
 			}
@@ -953,9 +1085,9 @@ public final class client extends GameShell {
 		javaScript = local94 != null && local94.equals("1");
 		@Pc(111) String local111 = this.getParameter("game");
 		if (local111 != null && local111.equals("1")) {
-			game = 1;
+			debug = 1;
 		} else {
-			game = 0;
+			debug = 0;
 		}
 		try {
 			affiliate = Integer.parseInt(this.getParameter("affid"));
@@ -1013,7 +1145,7 @@ public final class client extends GameShell {
 			worldListDefaultPort = GlobalJsonConfig.instance.server_port;
 		}
 
-		if (game == 1) {
+		if (debug == 1) {
 			Cheat.shiftClick = true;
 			FogManager.defaultLightColorRgb = 16777215;
 			FogManager.defaulFogColorRgb = 0;
@@ -1568,13 +1700,13 @@ public final class client extends GameShell {
 			} else if (!js5Archive13.fetchAll()) {
 				mainLoadSecondaryText = JagString.concatenate(new JagString[]{LocalizedText.MAINLOAD130, JagString.parseInt(js5Archive13.getPercentageComplete() / 20 + 85), JagString.PERCENT_SIGN});
 				mainLoadPercentage = 85;
-			} else if (js5Archive23.isGroupReady(DETAILS)) {
+			} else if (js5Archive23.isGroupReady(MAPS_GROUP)) {
 				MapList.init(Sprites.mapfunctions, js5Archive23);
 				mainLoadPercentage = 95;
 				mainLoadSecondaryText = LocalizedText.MAINLOAD130B;
 				mainLoadState = 135;
 			} else {
-				mainLoadSecondaryText = JagString.concatenate(new JagString[]{LocalizedText.MAINLOAD130, JagString.parseInt(js5Archive23.getPercentageComplete(DETAILS) / 10 + 90), JagString.PERCENT_SIGN});
+				mainLoadSecondaryText = JagString.concatenate(new JagString[]{LocalizedText.MAINLOAD130, JagString.parseInt(js5Archive23.getPercentageComplete(MAPS_GROUP) / 10 + 90), JagString.PERCENT_SIGN});
 				mainLoadPercentage = 85;
 			}
 		} else if (mainLoadState == 135) {

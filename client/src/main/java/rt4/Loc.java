@@ -290,7 +290,7 @@ public final class Loc extends Entity {
 			return null;
 		}
 		@Pc(69) int local69;
-		if (client.game != 0 && this.aBoolean80 && (this.aClass144_2 == null || this.aClass144_2 != null && this.aClass144_2.id != local19.anim)) {
+		if (client.debug != 0 && this.aBoolean80 && (this.aClass144_2 == null || this.aClass144_2 != null && this.aClass144_2.id != local19.anim)) {
 			local69 = local19.anim;
 			if (local19.anim == -1) {
 				local69 = local22;
