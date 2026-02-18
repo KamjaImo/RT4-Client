@@ -428,7 +428,7 @@ public class Cs1ScriptRunner {
 								local563 = PlayerList.self.xFine + local556 >> 7;
 								local571 = PlayerList.self.zFine - objId >> 7;
 								if (MiniMenu.aBoolean302 && (MiniMenu.anInt4999 & 0x40) != 0) {
-									@Pc(583) Component local583 = InterfaceList.method1418(MiniMenu.anInt2512, MiniMenu.anInt506);
+									@Pc(583) Component local583 = InterfaceList.getComponent(MiniMenu.anInt2512, MiniMenu.anInt506);
 									if (local583 == null) {
 										MiniMenu.method1294();
 									} else {

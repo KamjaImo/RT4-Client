@@ -220,8 +220,8 @@ public abstract class Font extends SecondaryNode {
 	}
 
 	@OriginalMember(owner = "client!rk", name = "a", descriptor = "(Lclient!na;IIIIIIIII)I")
-	public final int drawInterfaceText(@OriginalArg(0) JagString arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(6) int arg6, @OriginalArg(7) int arg7, @OriginalArg(8) int arg8, @OriginalArg(9) int arg9) {
-		return this.renderParagraphAlpha(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+	public final int drawInterfaceText(@OriginalArg(0) JagString arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(6) int shadow, @OriginalArg(7) int arg7, @OriginalArg(8) int arg8, @OriginalArg(9) int arg9) {
+		return this.renderParagraphAlpha(arg0, arg1, arg2, arg3, arg4, arg5, shadow, arg7, arg8, arg9);
 	}
 
 	@OriginalMember(owner = "client!rk", name = "a", descriptor = "(Lclient!na;II)V")
@@ -663,11 +663,11 @@ public abstract class Font extends SecondaryNode {
 	}
 
 	@OriginalMember(owner = "client!rk", name = "a", descriptor = "(Lclient!na;IIIIIIIIII)I")
-	public final int renderParagraphAlpha(@OriginalArg(0) JagString arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(6) int arg6, @OriginalArg(8) int arg7, @OriginalArg(9) int arg8, @OriginalArg(10) int arg9) {
+	public final int renderParagraphAlpha(@OriginalArg(0) JagString arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5, @OriginalArg(6) int shadow, @OriginalArg(8) int arg7, @OriginalArg(9) int arg8, @OriginalArg(10) int arg9) {
 		if (arg0 == null) {
 			return 0;
 		}
-		this.setColors(arg5, arg6, 256);
+		this.setColors(arg5, shadow, 256);
 		if (arg9 == 0) {
 			arg9 = this.lineHeight;
 		}
@@ -833,11 +833,11 @@ public abstract class Font extends SecondaryNode {
 	}
 
 	@OriginalMember(owner = "client!rk", name = "a", descriptor = "(III)V")
-	private void setColors(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2) {
+	private void setColors(@OriginalArg(0) int arg0, @OriginalArg(1) int shadow, @OriginalArg(2) int arg2) {
 		strikethroughColor = -1;
 		underlineColor = -1;
-		shadowColor = arg1;
-		shadowColorOverride = arg1;
+		shadowColor = shadow;
+		shadowColorOverride = shadow;
 		color = arg0;
 		colorOverride = arg0;
 		alpha = arg2;

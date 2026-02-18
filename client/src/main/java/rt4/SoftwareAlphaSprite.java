@@ -228,13 +228,13 @@ public final class SoftwareAlphaSprite extends SoftwareSprite {
 
 	@OriginalMember(owner = "client!am", name = "a", descriptor = "(IIIIII)V")
 	@Override
-	protected final void method1416(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5) {
+	protected final void method1416(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int angle, @OriginalArg(5) int arg5) {
 		if (arg5 == 0) {
 			return;
 		}
 		@Pc(9) int local9 = arg0 - (this.anInt1863 << 4);
 		@Pc(16) int local16 = arg1 - (this.anInt1861 << 4);
-		@Pc(23) double local23 = (double) (arg4 & 0xFFFF) * 9.587379924285257E-5D;
+		@Pc(23) double local23 = (double) (angle & 0xFFFF) * 9.587379924285257E-5D;
 		@Pc(33) int local33 = (int) Math.floor(Math.sin(local23) * (double) arg5 + 0.5D);
 		@Pc(43) int local43 = (int) Math.floor(Math.cos(local23) * (double) arg5 + 0.5D);
 		@Pc(53) int local53 = -local9 * local43 + -local16 * local33;
