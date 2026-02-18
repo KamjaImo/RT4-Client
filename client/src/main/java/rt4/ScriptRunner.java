@@ -36,9 +36,9 @@ public final class ScriptRunner {
 	@OriginalMember(owner = "client!fe", name = "nc", descriptor = "[Lclient!hj;")
 	public static final GoSubFrame[] callStack = new GoSubFrame[50];
 	@OriginalMember(owner = "client!ee", name = "j", descriptor = "[I")
-	public static final int[] anIntArray140 = new int[5];
+	public static final int[] memoryPageSizes = new int[5];
 	@OriginalMember(owner = "client!oe", name = "i", descriptor = "[[I")
-	public static final int[][] anIntArrayArray33 = new int[5][5000];
+	public static final int[][] memoryPageTable = new int[5][5000];
 	@OriginalMember(owner = "client!rl", name = "eb", descriptor = "Lclient!na;")
 	public static final JagString aClass100_928 = JagString.parse("(U0a )2 in: ");
 	@OriginalMember(owner = "client!fe", name = "I", descriptor = "Lclient!na;")
@@ -1869,25 +1869,26 @@ public final class ScriptRunner {
 
 		@Pc(44) byte op = -1;
 		
-		// Keep track of how many cycles of the game loop have been run.
+		// Keep track of how many "clock cycles" (aka lines of code) are run in the script.
 		@Pc(58) int cycles;
 
 		try {
-			// Each client script has two stacks of local variables,
+			// Each client script has two sets of local variables,
 			// one for ints and one for strings.
+			// These behave like runtime arguments for script execution.
 			intLocals = new int[script.intLocals];
 			@Pc(50) int intLocalIndex = 0;
 			stringLocals = new JagString[script.stringLocals];
 			@Pc(56) int stringLocalIndex = 0;
+
+			// Temporary working values for int and string arguments.
 			@Pc(77) int id;
 			@Pc(194) JagString value;
 
-			// Iterate each subsequent item in request.arguments.
-			// The meaning of the argument depends on its type and value.
+			// Process additional arguments in the request.
 			for (cycles = 1; cycles < requestArgs.length; cycles++) {
-				// Int values correspond to specific properties on the request object,
-				// such as mouse position or key presses.
  				if (requestArgs[cycles] instanceof Integer) {
+					// Numeric arguments are pointers to specific numeric properties in the request.
 					id = (Integer) requestArgs[cycles];
 					if (id == 0x80000001) {
 						id = request.mouseX;
@@ -1918,6 +1919,8 @@ public final class ScriptRunner {
 					}
 					intLocals[intLocalIndex++] = id;
 				} else if (requestArgs[cycles] instanceof JagString) {
+					// String arguments are string literals in the request, wrapped as JagStrings.
+					// Notably, "event_opbase" stores the opbase as the argument instead.
 					value = (JagString) requestArgs[cycles];
 					if (value.strEquals(EVENT_OPBASE)) {
 						value = request.opBase;
@@ -1925,43 +1928,77 @@ public final class ScriptRunner {
 					stringLocals[stringLocalIndex++] = value;
 				}
 			}
+
+			// At this point in the program, intLocals and stringLocals are populated with call arguments,
+			// and intLocalIndex and stringLocalIndex point to the end of their respective arrays.
+
+			// Begin processing instructions in the script.
 			cycles = 0;
 			nextOp:
 			while (true) {
 				cycles++;
+
+				// If script takes too many clock cycles, it gets terminated for being slow.
 				if (maxCycles < cycles) {
 					throw new RuntimeException("slow");
 				}
+
+				// Increment program counter to next instruction.
 				pc++;
+
+				// Grab opcode of instruction.
 				@Pc(226) int opcode = opcodes[pc];
+
+				// These are local working variables reserved for use within each opcode.
 				@Pc(803) int int3;
 				@Pc(652) int local652;
 				@Pc(809) int int1;
 				@Pc(609) JagString string;
+
+				// There are a lot of opcodes, so processing is split up in 3 chunks for performance.
 				if (opcode < 100) {
+					// Opcode 0: PUSH [INT]
+					// Push an integer value onto the stack.
 					if (opcode == 0) {
 						intStack[isp++] = intOperands[pc];
 						continue;
 					}
+
+					// Opcode 1: PUSHVARP [INT]
+					// Get the value of a varp and push it onto the stack. See VarpDomain.java for details on varps.
 					if (opcode == 1) {
 						id = intOperands[pc];
 						intStack[isp++] = VarpDomain.activeVarps[id];
 						continue;
 					}
+
+					// Opcode 2: POPVARP [INT]
+					// Pop a value off the stack and set it as the value of the specified varp.
 					if (opcode == 2) {
 						id = intOperands[pc];
 						isp--;
-						VarpDomain.method2766(id, intStack[isp]);
+						VarpDomain.setActive(id, intStack[isp]);
 						continue;
 					}
+
+					// Opcode 3: PUSH [STRING]
+					// Push a string value onto the stack.
 					if (opcode == 3) {
 						stringStack[ssp++] = script.stringOperands[pc];
 						continue;
 					}
+
+					// Opcode 6: JMP [INT]
+					// Unconditional relative jump forward by the requested number of instructions.
 					if (opcode == 6) {
 						pc += intOperands[pc];
 						continue;
 					}
+
+					// Opcode 7: JNE [INT]
+					// Jump if not equal.
+					// Compares the topmost two integer values on the integer stack.
+					// If not equal, jumps forward by the requested number of instructions.
 					if (opcode == 7) {
 						isp -= 2;
 						if (intStack[isp] != intStack[isp + 1]) {
@@ -1969,6 +2006,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 8: JEQ [INT]
+					// Jump if equal.
+					// Compares the topmost two integer values on the integer stack.
+					// If equal, jumps forward by the requested number of instructions.
 					if (opcode == 8) {
 						isp -= 2;
 						if (intStack[isp + 1] == intStack[isp]) {
@@ -1976,6 +2018,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 9: JLT [INT]
+					// Jump if less than.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is less than the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 9) {
 						isp -= 2;
 						if (intStack[isp] < intStack[isp + 1]) {
@@ -1983,6 +2030,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 10: JGT [INT]
+					// Jump if greater than.
+					// Compraes the topmost two integer values on the integer stack.
+					// If the top value is greater than the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 10) {
 						isp -= 2;
 						if (intStack[isp + 1] < intStack[isp]) {
@@ -1990,6 +2042,13 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 21: RET
+					// Return to calling function.
+					// Restores execution to the last instance of the CALL instruction.
+					// This is done by popping the previous frame off the call stack
+					// and restoring state (program counter, locals, and opcodes/operands) from it.
+					// If there are no frames to return to, this instruction is a NOOP.
 					if (opcode == 21) {
 						if (csp == 0) {
 							return;
@@ -2003,17 +2062,28 @@ public final class ScriptRunner {
 						intOperands = script.intOperands;
 						continue;
 					}
+
+					// Opcode 25: PUSHVARBIT [INT]
+					// Get the value of a varbit and push it onto the stack. See VarbitType.java for details on varbits.
 					if (opcode == 25) {
 						id = intOperands[pc];
 						intStack[isp++] = VarpDomain.getVarbit(id);
 						continue;
 					}
+
+					// Opcode 27: POPVARBIT [INT]
+					// Pop a value off the stack and set it as the value of the specified varbit.
 					if (opcode == 27) {
 						id = intOperands[pc];
 						isp--;
 						VarpDomain.setVarbitClient(id, intStack[isp]);
 						continue;
 					}
+
+					// Opcode 31: JLE
+					// Jump if less than or equal to.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is less than or equal to the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 31) {
 						isp -= 2;
 						if (intStack[isp + 1] >= intStack[isp]) {
@@ -2021,6 +2091,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 32: JGE
+					// Jump if greater than or equal to.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is greater than or equal to the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 32) {
 						isp -= 2;
 						if (intStack[isp] >= intStack[isp + 1]) {
@@ -2028,10 +2103,16 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 33: PUSHLOC [INT]
+					// Push the integer local at the specified index onto the stack.
 					if (opcode == 33) {
 						intStack[isp++] = intLocals[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 34: POPLOC [INT]
+					// Pop an integer value off the stack and save it to the integer local at the specified index.
 					@Pc(555) int local;
 					if (opcode == 34) {
 						local = intOperands[pc];
@@ -2039,16 +2120,27 @@ public final class ScriptRunner {
 						intLocals[local] = intStack[isp];
 						continue;
 					}
+
+					// Opcode 35: PUSHLOC [STRING]
+					// Push the string local at the specified index onto the stack.
 					if (opcode == 35) {
 						stringStack[ssp++] = stringLocals[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 36: POPLOC [STRING]
+					// Pop a string value off the stack and save it to the string local at the specified index.
 					if (opcode == 36) {
 						local = intOperands[pc];
 						ssp--;
 						stringLocals[local] = stringStack[ssp];
 						continue;
 					}
+
+					// Opcode 37: STRCAT [INT]
+					// Concatenate one or more strings.
+					// Operand is number of strings, n.
+					// The top n strings are popped off the stack, concatenated, and the result pushed back onto the stack.
 					if (opcode == 37) {
 						id = intOperands[pc];
 						ssp -= id;
@@ -2056,48 +2148,83 @@ public final class ScriptRunner {
 						stringStack[ssp++] = string;
 						continue;
 					}
+
+					// Opcode 38: DECINT
+					// Decrement the integer stack pointer.
 					if (opcode == 38) {
 						isp--;
 						continue;
 					}
+
+					// Opcode 39: DECSTR
+					// Decrement the string stack pointer.
 					if (opcode == 39) {
 						ssp--;
 						continue;
 					}
+
+					// Opcode 40: CALL [INT]
+					// Load a new script and jump execution into it.
+					// Information about the current process (program counter, opcodes, locals, etc)
+					// is pushed onto the call stack prior to jump, so that execution of calling script
+					// can be resumed with the RET instruction.
 					if (opcode == 40) {
+						// Look up the new script to call.
 						id = intOperands[pc];
-						@Pc(642) ClientScript local642 = ClientScriptList.get(id);
-						@Pc(646) int[] local646 = new int[local642.intLocals];
-						@Pc(650) JagString[] local650 = new JagString[local642.stringLocals];
-						for (local652 = 0; local652 < local642.intArgs; local652++) {
-							local646[local652] = intStack[local652 + isp - local642.intArgs];
+						@Pc(642) ClientScript newScript = ClientScriptList.get(id);
+
+						// Since args are pushed onto the stack prior to the CALL instruction,
+						// we need to move them off the stack and into the new process's locals.
+						@Pc(646) int[] clientIntLocals = new int[newScript.intLocals];
+						@Pc(650) JagString[] clientStringLocals = new JagString[newScript.stringLocals];
+						for (local652 = 0; local652 < newScript.intArgs; local652++) {
+							clientIntLocals[local652] = intStack[local652 + isp - newScript.intArgs];
 						}
-						for (local652 = 0; local652 < local642.stringArgs; local652++) {
-							local650[local652] = stringStack[local652 + ssp - local642.stringArgs];
+						for (local652 = 0; local652 < newScript.stringArgs; local652++) {
+							clientStringLocals[local652] = stringStack[local652 + ssp - newScript.stringArgs];
 						}
-						isp -= local642.intArgs;
-						ssp -= local642.stringArgs;
-						@Pc(705) GoSubFrame local705 = new GoSubFrame();
-						local705.stringLocals = stringLocals;
-						local705.intLocals = intLocals;
-						local705.pc = pc;
-						local705.script = script;
+						isp -= newScript.intArgs;
+						ssp -= newScript.stringArgs;
+
+						// Store the current process's information into a frame.
+						@Pc(705) GoSubFrame currentFrame = new GoSubFrame();
+						currentFrame.stringLocals = stringLocals;
+						currentFrame.intLocals = intLocals;
+						currentFrame.pc = pc;
+						currentFrame.script = script;
+
+						// Halt execution on stack overflow.
 						if (csp >= callStack.length) {
 							throw new RuntimeException();
 						}
-						script = local642;
+
+						// Replace current process with new script.
+						script = newScript;
+
+						// Reset the program counter.
+						// On the next cycle, program counter will be incremented to 0, the start of the new script.
 						pc = -1;
-						callStack[csp++] = local705;
-						intLocals = local646;
-						intOperands = local642.intOperands;
-						opcodes = local642.opcodes;
-						stringLocals = local650;
+
+						// Push the old process onto the call stack.
+						callStack[csp++] = currentFrame;
+
+						// Replace locals/operands/opcodes with new process's.
+						intLocals = clientIntLocals;
+						intOperands = newScript.intOperands;
+						opcodes = newScript.opcodes;
+						stringLocals = clientStringLocals;
 						continue;
 					}
+
+					// Opcode 42: PUSHVARC [INT]
+					// Get the value of a varc and push it onto the stack. See VarcDomain.java for details on varcs.
 					if (opcode == 42) {
 						intStack[isp++] = VarcDomain.varcs[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 43: POPVARC [INT]
+					// Pop a value off the stack and set it as the value of the specified varc.
 					if (opcode == 43) {
 						id = intOperands[pc];
 						isp--;
@@ -2105,48 +2232,69 @@ public final class ScriptRunner {
 						DelayedStateChange.method24(id);
 						continue;
 					}
+
+					// Opcode 44: MALLOC [INT]
+					// Allocate a page of memory.
+					// First 16 bits of operand specify the page number (0-4).
+					// Last 16 bits of operand specify whether to fill page with 0's (0x69) or 0xFF's (any other value).
+					// Amount of memory to allocate (0-5000 bytes) must be pushed onto the stack before calling MALLOC.
 					if (opcode == 44) {
 						id = intOperands[pc] >> 16;
 						isp--;
 						int3 = intStack[isp];
 						int1 = intOperands[pc] & 0xFFFF;
 						if (int3 >= 0 && int3 <= 5000) {
-							anIntArray140[id] = int3;
-							@Pc(828) byte local828 = -1;
+							memoryPageSizes[id] = int3;
+							@Pc(828) byte memValue = -1;
 							if (int1 == 105) {
-								local828 = 0;
+								memValue = 0;
 							}
 							local652 = 0;
 							while (true) {
 								if (int3 <= local652) {
 									continue nextOp;
 								}
-								anIntArrayArray33[id][local652] = local828;
+								memoryPageTable[id][local652] = memValue;
 								local652++;
 							}
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 45: MREAD [INT]
+					// Read a value from memory and push it onto the stack.
+					// Operand specifies the page number (0-4).
+					// Address within that page (0-5000) must be pushed onto the stack before calling MREAD.
 					if (opcode == 45) {
 						id = intOperands[pc];
 						isp--;
 						int1 = intStack[isp];
-						if (int1 >= 0 && int1 < anIntArray140[id]) {
-							intStack[isp++] = anIntArrayArray33[id][int1];
+						if (int1 >= 0 && int1 < memoryPageSizes[id]) {
+							intStack[isp++] = memoryPageTable[id][int1];
 							continue;
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 46: MWRITE [INT]
+					// Pop a value off the stack and write it into memory.
+					// Operand specifies the page number (0-4).
+					// Two values must be pushed onto the stack before calling MWRITE:
+					// - Value to write (top of stack)
+					// - Address within page (0-5000) to write to
 					if (opcode == 46) {
 						id = intOperands[pc];
 						isp -= 2;
 						int1 = intStack[isp];
-						if (int1 >= 0 && int1 < anIntArray140[id]) {
-							anIntArrayArray33[id][int1] = intStack[isp + 1];
+						if (int1 >= 0 && int1 < memoryPageSizes[id]) {
+							memoryPageTable[id][int1] = intStack[isp + 1];
 							continue;
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 47: PUSHVARCSTR [INT]
+					// Get the value of a varcstring and push it onto the stack. See VarcDomain.java for details on varcstrings.
 					if (opcode == 47) {
 						value = VarcDomain.varcstrs[intOperands[pc]];
 						if (value == null) {
@@ -2155,6 +2303,9 @@ public final class ScriptRunner {
 						stringStack[ssp++] = value;
 						continue;
 					}
+
+					// Opcode 48: POPVARCSTR [INT]
+					// Pop a value off the stack and set it as the value of the specified varcstring.
 					if (opcode == 48) {
 						id = intOperands[pc];
 						ssp--;
@@ -2162,16 +2313,29 @@ public final class ScriptRunner {
 						DelayedStateChange.method1840(id);
 						continue;
 					}
+
+					// Opcode 51: SWITCH [INT]
+					// Switch statement - jump to one of multiple options depending on value of case.
+					// This instruction makes use of a "switch table" (or jump table),
+					// with one table per supported operand to switch off of.
+					// Each switch table is indexed by the value, or case, of the operand.
+					// For example, in the statement `switch myVar { case 1: break; case 2: break; }`
+					// The switch operand is `myVar` and the two cases are `1` and `2`.
+					// In these scripts, the switches and cases are compiled down to numeric values.
+					// Operand is the switch operand to key off of.
+					// Value/case of the operand must be pushed onto the stack before calling SWITCH.
+					// If pushed value/case matches the value in the switch table, then the jump in the table is performed.
 					if (opcode == 51) {
-						@Pc(992) HashTable local992 = script.switchTables[intOperands[pc]];
+						@Pc(992) HashTable switchTable = script.switchTables[intOperands[pc]];
 						isp--;
-						@Pc(1002) IntNode local1002 = (IntNode) local992.get(intStack[isp]);
-						if (local1002 != null) {
-							pc += local1002.value;
+						@Pc(1002) IntNode caseJump = (IntNode) switchTable.get(intStack[isp]);
+						if (caseJump != null) {
+							pc += caseJump.value;
 						}
 						continue;
 					}
 				}
+				
 				@Pc(1020) boolean local1020;
 				local1020 = intOperands[pc] == 1;
 				@Pc(1182) Component component;

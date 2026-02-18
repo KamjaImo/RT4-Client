@@ -132,6 +132,11 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!lb", name = "v", descriptor = "I")
 	public static int language = 0;
 
+	// The country parameter would have contained an identifier for the user's country of origin.
+	// This is used in some interface scripts, possibly for world selection logic.
+	@OriginalMember(owner = "client!wk", name = "w", descriptor = "I")
+	public static int country;
+
 	// The settings parameter would have contained a unique key identifying the user's settings.
 	// This key would be passed around in the URL of the applet, presumably to allow the client to 
 	// keep track of a user when they hopped worlds, clicked the "buy membership" button, 
@@ -140,6 +145,11 @@ public final class client extends GameShell {
 	public static final JagString SETTINGS = JagString.parse("settings");
 	public static JagString settings = null;
 	@OriginalMember(owner = "client!rh", name = "j", descriptor = "Lclient!client;")
+
+	// The haveie6 parameter would have indicated whether IE6 is installed on the user's computer.
+	// Presumably this would be used when opening browser links in-game.
+	@OriginalMember(owner = "client!od", name = "n", descriptor = "Z")
+	public static boolean haveIe6 = false;
 
 	// The advertsuppressed parameter would have indicated whether or not to suppress banner ads on the page,
 	// e.g. if the user is a paying member or underage.
@@ -199,10 +209,6 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!d", name = "S", descriptor = "Ljava/util/Random;")
 	public static final Random aRandom1 = new Random();
 
-	@OriginalMember(owner = "client!wk", name = "w", descriptor = "I")
-	public static int country;
-	@OriginalMember(owner = "client!od", name = "n", descriptor = "Z")
-	public static boolean haveIe6 = false;
 	@OriginalMember(owner = "client!qi", name = "r", descriptor = "I")
 	public static int affiliate = 0;
 	@OriginalMember(owner = "client!dk", name = "h", descriptor = "Lclient!na;")
