@@ -24,6 +24,20 @@ import java.util.Random;
 @OriginalClass("client!client")
 public final class client extends GameShell {
 
+	// CORE CLIENT STATE
+
+	// The singleton instance of the game client.
+	// At the end of the main() method, this instance is initialized and running under the applet lifecycle.
+	@OriginalMember(owner = "client!dk", name = "h", descriptor = "Lclient!na;")
+	public static client instance;
+
+	// Input handling is performed by the client class because it's coupled with the windowing system.
+	// Inputs are generally passed through to some global helper class that can be referenced by other components.
+
+	// Mouse wheel scroll state.
+	@OriginalMember(owner = "client!fk", name = "q", descriptor = "Lclient!uc;")
+	public static MouseWheel mouseWheel;
+
 	// LOADING PROCESS
 	// The game client loads in a series of numbered stages that run sequentially
 	// until the game is fully loaded and asynchronous processing is fully online.
@@ -32,6 +46,18 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!jm", name = "z", descriptor = "Lclient!na;")
 	public static JagString mainLoadSecondaryText = EMPTY_STRING;
 
+	// Audio channel for playing music. In this class, it's used to initialize the title song.
+	// Afterwards, it becomes bound to the MidiPlayer/MusicPlayer and subsequent music operations 
+	// go through them instead.
+	@OriginalMember(owner = "client!ba", name = "D", descriptor = "Lclient!vh;")
+	public static AudioChannel musicChannel;
+
+	// Audio channel for playing sound effects. Not used in this class, just initialized.
+	// Afterwards, it becomes bound to the MidiPlayer/SoundPlayer and subsequent sound effects
+	// go through them instead.
+	@OriginalMember(owner = "client!lh", name = "s", descriptor = "Lclient!vh;")
+	public static AudioChannel soundChannel;
+
 	// CACHE
 	// The game's cache is stored in 31 files on the user's disk:
 	// - 1 master index (`main_file_cache.idx255`)
@@ -39,6 +65,14 @@ public final class client extends GameShell {
 	// - 1 data file (`main_file_cache.dat2`)
 	// - 1 UID file (`random.dat`)
 	// The specific file format of each is unique to RuneScape, and the individual files are tightly coupled with each other.
+
+	// UID FILE
+	// The UID file contains 24 bytes of random data from the server.
+	// Not sure what the data is for, might just be used to validate the user's session.
+
+	// File handle for the raw UID file on the user's disk.
+	@OriginalMember(owner = "client!jg", name = "c", descriptor = "Lclient!en;")
+	public static BufferedFile uid;
 
 	// INDEX FILES
 	// Index files do not contain game data, but rather point to specific pieces of game data within the larger data file.
@@ -60,6 +94,22 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!nh", name = "fb", descriptor = "[I")
 	public static final int[] JS5_ARCHIVE_WEIGHTS = new int[]{4, 4, 1, 2, 6, 4, 2, 49, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
+	// MASTER INDEX FILE
+	// The master index file contains meta-information about the other index files, including checksums and version info.
+
+	// File handle for the raw master index file on the user's disk.
+	@OriginalMember(owner = "client!pf", name = "f", descriptor = "Lclient!en;")
+	public static BufferedFile cacheMasterIndex;
+
+	// DATA FILE
+	// The data file contains all of the game data, of all types, in a completely disorganized pile.
+	// In order to get anything meaningful out of the data file, you must parse the index file to retrieve metadata
+	// about what resources are located where.
+
+	// File handle for the raw data file on the user's disk.
+	@OriginalMember(owner = "client!nj", name = "f", descriptor = "Lclient!en;")
+	public static BufferedFile cacheData;
+
 	// JS5 ARCHIVES
 	// In order to extract any resource, information from the master index, index, and data files must be combined
 	// into a format known as a Js5 archive. One archive contains all of the resources defined within a single index file,
@@ -67,6 +117,11 @@ public final class client extends GameShell {
 	// Js5 archives typically require substantial unpacking and post-processing before their contents are usable.
 	@OriginalMember(owner = "client!sg", name = "k", descriptor = "Lclient!ve;")
 	public static Js5 js5Archive23;
+
+	// All requests to read/write data to any JS5 archive go through this FIFO queue,
+	// which handles the translation to/from physical file changes.
+	@OriginalMember(owner = "client!gm", name = "T", descriptor = "Lclient!k;")
+	public static Js5CacheQueue js5CacheQueue;
 
 	// RESOURCES
 	// Each individual piece of game data is referred to as a "resource".
@@ -103,6 +158,10 @@ public final class client extends GameShell {
 	// and from there the user can change worlds if desired to disconnect and reconnect to a new server.
 	@OriginalMember(owner = "client!pb", name = "Q", descriptor = "I")
 	public static int worldListId = 1;
+
+	// All requests to the server go through this FIFO queue.
+	@OriginalMember(owner = "client!id", name = "l", descriptor = "Lclient!jb;")
+	public static Js5NetQueue js5NetQueue;
 
 	// STRING CONSTANTS
 	// During early initialization, the game client does not have access to text resources within the cache files,
@@ -161,6 +220,11 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!lk", name = "U", descriptor = "Z")
 	public static boolean javaScript = false;
 
+	// The affid parameter would have been passed around as part of the user's account state.
+	// Presumably this was used for tracking affiliate links/referrals.
+	@OriginalMember(owner = "client!qi", name = "r", descriptor = "I")
+	public static int affiliate = 0;
+
 	// The objecttag parameter was passed around via the applet URLs, but its function must have been internal,
 	// as it doesn't seem to be used within the client itself.
 	@OriginalMember(owner = "client!t", name = "x", descriptor = "Z")
@@ -209,26 +273,6 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!d", name = "S", descriptor = "Ljava/util/Random;")
 	public static final Random aRandom1 = new Random();
 
-	@OriginalMember(owner = "client!qi", name = "r", descriptor = "I")
-	public static int affiliate = 0;
-	@OriginalMember(owner = "client!dk", name = "h", descriptor = "Lclient!na;")
-	public static client instance;
-	@OriginalMember(owner = "client!ba", name = "D", descriptor = "Lclient!vh;")
-	public static AudioChannel musicChannel;
-	@OriginalMember(owner = "client!fk", name = "q", descriptor = "Lclient!uc;")
-	public static MouseWheel mouseWheel;
-	@OriginalMember(owner = "client!lh", name = "s", descriptor = "Lclient!vh;")
-	public static AudioChannel soundChannel;
-	@OriginalMember(owner = "client!id", name = "l", descriptor = "Lclient!jb;")
-	public static Js5NetQueue js5NetQueue;
-	@OriginalMember(owner = "client!gm", name = "T", descriptor = "Lclient!k;")
-	public static Js5CacheQueue js5CacheQueue;
-	@OriginalMember(owner = "client!nj", name = "f", descriptor = "Lclient!en;")
-	public static BufferedFile cacheData;
-	@OriginalMember(owner = "client!pf", name = "f", descriptor = "Lclient!en;")
-	public static BufferedFile cacheMasterIndex;
-	@OriginalMember(owner = "client!jg", name = "c", descriptor = "Lclient!en;")
-	public static BufferedFile uid;
 	@OriginalMember(owner = "client!tl", name = "d", descriptor = "I")
 	public static int gameState = 0;
 	@OriginalMember(owner = "client!id", name = "f", descriptor = "Z")
