@@ -9,13 +9,13 @@ import java.nio.ByteBuffer;
 
 public class MaterialManager {
 	public static class MaterialType {
-		public const int NONE = 0;
-		public const int SPECULAR = 1;
-		public const int LIQUID = 2;
-		public const int UNDERWATER = 3;
-		public const int WATER = 4;
-		public const int WATERFALL = 5;
-		public const int UNLIT = 6;
+		public static final int NONE = 0;
+		public static final int SPECULAR = 1;
+		public static final int LIQUID = 2;
+		public static final int UNDERWATER = 3;
+		public static final int WATER = 4;
+		public static final int WATERFALL = 5;
+		public static final int UNLIT = 6;
 	}
 
 	@OriginalMember(owner = "client!dl", name = "c", descriptor = "I")

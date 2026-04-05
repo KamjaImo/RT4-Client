@@ -131,13 +131,6 @@ public final class Cache {
 					// @Pc(297) byte[] local297 = dataReadResult;
 					// return local297;
 
-					if(firstRun) {
-						System.out.println("Group: " + group);
-						System.out.println("First seek in data file: " + firstReadIdx * 520);
-						System.out.println("Length of first data chunk: " + firstResultLen);
-						firstRun = false;
-					}
-
 					return result;
 				}
 			} catch (@Pc(301) IOException ex) {

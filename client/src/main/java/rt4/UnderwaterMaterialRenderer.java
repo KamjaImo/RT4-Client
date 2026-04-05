@@ -79,7 +79,7 @@ public final class UnderwaterMaterialRenderer implements MaterialRenderer {
 		try {
 			for (@Pc(19) int i = 0; i < SceneGraph.surfaceHdTiles[0].length; i++) {
 				@Pc(31) GlTile tile = SceneGraph.surfaceHdTiles[0][i];
-				if (tile.texture >= 0 && Rasteriser.textureProvider.getMaterialType(tile.texture) == MaterialManager.WATER) {
+				if (tile.texture >= 0 && Rasteriser.textureProvider.getMaterialType(tile.texture) == MaterialManager.MaterialType.WATER) {
 					gl.glColor4fv(ColorUtils.getRgbFloat(tile.underwaterColor), 0);
 					@Pc(57) float f = 201.5F - (tile.blend ? 1.0F : 0.5F);
 					tile.method1944(SceneGraph.tiles, f, true);

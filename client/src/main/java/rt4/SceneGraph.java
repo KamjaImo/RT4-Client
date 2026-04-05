@@ -1003,7 +1003,7 @@ public class SceneGraph {
 												@Pc(1834) int local1834 = tileOverlays[underwaterLevel][local322][local1794] & 0xFF;
 												if (local1834 != 0) {
 													@Pc(1842) FloType local1842 = FloTypeList.method4395(local1834 - 1);
-													if (local1842.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1842.texture) == MaterialManager.WATER) {
+													if (local1842.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1842.texture) == MaterialManager.MaterialType.WATER) {
 														underWaterColors[underwaterX][underwaterZ] = local1842.waterColor + (local1842.waterOpacity << 24);
 														continue label771;
 													}
@@ -1020,7 +1020,7 @@ public class SceneGraph {
 								@Pc(1353) int floId;
 								@Pc(1288) int textureX;
 								if (GlRenderer.enabled && !underwater && underWaterColors != null && underwaterLevel == 0) {
-									if (local1248.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1248.texture) == MaterialManager.WATER) {
+									if (local1248.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1248.texture) == MaterialManager.MaterialType.WATER) {
 										underWaterColors[underwaterX][underwaterZ] = (local1248.waterOpacity << 24) + local1248.waterColor;
 									} else {
 										label737:
@@ -1030,7 +1030,7 @@ public class SceneGraph {
 													floId = tileOverlays[underwaterLevel][textureX][textureY] & 0xFF;
 													if (floId != 0) {
 														@Pc(1366) FloType local1366 = FloTypeList.method4395(floId - 1);
-														if (local1366.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1366.texture) == MaterialManager.WATER) {
+														if (local1366.texture != -1 && Rasteriser.textureProvider.getMaterialType(local1366.texture) == MaterialManager.MaterialType.WATER) {
 															underWaterColors[underwaterX][underwaterZ] = local1366.waterColor + (local1366.waterOpacity << 24);
 															break label737;
 														}
@@ -3070,7 +3070,7 @@ public class SceneGraph {
 					for (z = 0; z < underwaterHdTiles[x].length; z++) {
 						@Pc(336) GlTile local336 = underwaterHdTiles[x][z];
 						@Pc(350) float local350 = 201.5F - (float) x * 50.0F - (local336.blend ? 1.0F : 0.5F);
-						if (local336.texture != -1 && Rasteriser.textureProvider.getMaterialType(local336.texture) == MaterialManager.WATER && Preferences.highWaterDetail) {
+						if (local336.texture != -1 && Rasteriser.textureProvider.getMaterialType(local336.texture) == MaterialManager.MaterialType.WATER && Preferences.highWaterDetail) {
 							WaterMaterialRenderer.method619(local336.underwaterColor);
 						}
 						local336.method1944(tiles, local350, false);
