@@ -269,14 +269,21 @@ public class InterfaceList {
 	}
 
 	@OriginalMember(owner = "client!qf", name = "a", descriptor = "(BII)Lclient!be;")
-	public static Component method1418(@OriginalArg(1) int arg0, @OriginalArg(2) int arg1) {
-		@Pc(7) Component local7 = getComponent(arg0);
-		if (arg1 == -1) {
-			return local7;
-		} else if (local7 == null || local7.createdComponents == null || local7.createdComponents.length <= arg1) {
+	public static Component getComponent(@OriginalArg(1) int parentId, @OriginalArg(2) int childId) {
+		// Get parent component.
+		@Pc(7) Component component = getComponent(parentId);
+
+		// Return parent if no child specified.
+		if (childId == -1) {
+			return component;
+
+		// Return null if parent does not exist or invalid child specified.
+		} else if (component == null || component.createdComponents == null || component.createdComponents.length <= childId) {
 			return null;
+
+		// Return child component.
 		} else {
-			return local7.createdComponents[arg1];
+			return component.createdComponents[childId];
 		}
 	}
 

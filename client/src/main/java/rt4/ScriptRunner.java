@@ -36,9 +36,9 @@ public final class ScriptRunner {
 	@OriginalMember(owner = "client!fe", name = "nc", descriptor = "[Lclient!hj;")
 	public static final GoSubFrame[] callStack = new GoSubFrame[50];
 	@OriginalMember(owner = "client!ee", name = "j", descriptor = "[I")
-	public static final int[] anIntArray140 = new int[5];
+	public static final int[] memoryPageSizes = new int[5];
 	@OriginalMember(owner = "client!oe", name = "i", descriptor = "[[I")
-	public static final int[][] anIntArrayArray33 = new int[5][5000];
+	public static final int[][] memoryPageTable = new int[5][5000];
 	@OriginalMember(owner = "client!rl", name = "eb", descriptor = "Lclient!na;")
 	public static final JagString aClass100_928 = JagString.parse("(U0a )2 in: ");
 	@OriginalMember(owner = "client!fe", name = "I", descriptor = "Lclient!na;")
@@ -1869,25 +1869,26 @@ public final class ScriptRunner {
 
 		@Pc(44) byte op = -1;
 		
-		// Keep track of how many cycles of the game loop have been run.
+		// Keep track of how many "clock cycles" (aka lines of code) are run in the script.
 		@Pc(58) int cycles;
 
 		try {
-			// Each client script has two stacks of local variables,
+			// Each client script has two sets of local variables,
 			// one for ints and one for strings.
+			// These behave like runtime arguments for script execution.
 			intLocals = new int[script.intLocals];
 			@Pc(50) int intLocalIndex = 0;
 			stringLocals = new JagString[script.stringLocals];
 			@Pc(56) int stringLocalIndex = 0;
+
+			// Temporary working values for int and string arguments.
 			@Pc(77) int id;
 			@Pc(194) JagString value;
 
-			// Iterate each subsequent item in request.arguments.
-			// The meaning of the argument depends on its type and value.
+			// Process additional arguments in the request.
 			for (cycles = 1; cycles < requestArgs.length; cycles++) {
-				// Int values correspond to specific properties on the request object,
-				// such as mouse position or key presses.
  				if (requestArgs[cycles] instanceof Integer) {
+					// Numeric arguments are pointers to specific numeric properties in the request.
 					id = (Integer) requestArgs[cycles];
 					if (id == 0x80000001) {
 						id = request.mouseX;
@@ -1918,6 +1919,8 @@ public final class ScriptRunner {
 					}
 					intLocals[intLocalIndex++] = id;
 				} else if (requestArgs[cycles] instanceof JagString) {
+					// String arguments are string literals in the request, wrapped as JagStrings.
+					// Notably, "event_opbase" stores the opbase as the argument instead.
 					value = (JagString) requestArgs[cycles];
 					if (value.strEquals(EVENT_OPBASE)) {
 						value = request.opBase;
@@ -1925,43 +1928,77 @@ public final class ScriptRunner {
 					stringLocals[stringLocalIndex++] = value;
 				}
 			}
+
+			// At this point in the program, intLocals and stringLocals are populated with call arguments,
+			// and intLocalIndex and stringLocalIndex point to the end of their respective arrays.
+
+			// Begin processing instructions in the script.
 			cycles = 0;
 			nextOp:
 			while (true) {
 				cycles++;
+
+				// If script takes too many clock cycles, it gets terminated for being slow.
 				if (maxCycles < cycles) {
 					throw new RuntimeException("slow");
 				}
+
+				// Increment program counter to next instruction.
 				pc++;
+
+				// Grab opcode of instruction.
 				@Pc(226) int opcode = opcodes[pc];
+
+				// These are local working variables reserved for use within each opcode.
 				@Pc(803) int int3;
 				@Pc(652) int local652;
 				@Pc(809) int int1;
 				@Pc(609) JagString string;
+
+				// Basic opcodes (push/pop, call/ret, etc).
 				if (opcode < 100) {
+					// Opcode 0: PUSH [INT]
+					// Push an integer value onto the stack.
 					if (opcode == 0) {
 						intStack[isp++] = intOperands[pc];
 						continue;
 					}
+
+					// Opcode 1: PUSHVARP [INT]
+					// Get the value of a varp and push it onto the stack. See VarpDomain.java for details on varps.
 					if (opcode == 1) {
 						id = intOperands[pc];
 						intStack[isp++] = VarpDomain.activeVarps[id];
 						continue;
 					}
+
+					// Opcode 2: POPVARP [INT]
+					// Pop a value off the stack and set it as the value of the specified varp.
 					if (opcode == 2) {
 						id = intOperands[pc];
 						isp--;
-						VarpDomain.method2766(id, intStack[isp]);
+						VarpDomain.setActive(id, intStack[isp]);
 						continue;
 					}
+
+					// Opcode 3: PUSH [STRING]
+					// Push a string value onto the stack.
 					if (opcode == 3) {
 						stringStack[ssp++] = script.stringOperands[pc];
 						continue;
 					}
+
+					// Opcode 6: JMP [INT]
+					// Unconditional relative jump forward by the requested number of instructions.
 					if (opcode == 6) {
 						pc += intOperands[pc];
 						continue;
 					}
+
+					// Opcode 7: JNE [INT]
+					// Jump if not equal.
+					// Compares the topmost two integer values on the integer stack.
+					// If not equal, jumps forward by the requested number of instructions.
 					if (opcode == 7) {
 						isp -= 2;
 						if (intStack[isp] != intStack[isp + 1]) {
@@ -1969,6 +2006,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 8: JEQ [INT]
+					// Jump if equal.
+					// Compares the topmost two integer values on the integer stack.
+					// If equal, jumps forward by the requested number of instructions.
 					if (opcode == 8) {
 						isp -= 2;
 						if (intStack[isp + 1] == intStack[isp]) {
@@ -1976,6 +2018,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 9: JLT [INT]
+					// Jump if less than.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is less than the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 9) {
 						isp -= 2;
 						if (intStack[isp] < intStack[isp + 1]) {
@@ -1983,6 +2030,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 10: JGT [INT]
+					// Jump if greater than.
+					// Compraes the topmost two integer values on the integer stack.
+					// If the top value is greater than the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 10) {
 						isp -= 2;
 						if (intStack[isp + 1] < intStack[isp]) {
@@ -1990,6 +2042,13 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 21: RET
+					// Return to calling function.
+					// Restores execution to the last instance of the CALL instruction.
+					// This is done by popping the previous frame off the call stack
+					// and restoring state (program counter, locals, and opcodes/operands) from it.
+					// If there are no frames to return to, this instruction is a NOOP.
 					if (opcode == 21) {
 						if (csp == 0) {
 							return;
@@ -2003,17 +2062,28 @@ public final class ScriptRunner {
 						intOperands = script.intOperands;
 						continue;
 					}
+
+					// Opcode 25: PUSHVARBIT [INT]
+					// Get the value of a varbit and push it onto the stack. See VarbitType.java for details on varbits.
 					if (opcode == 25) {
 						id = intOperands[pc];
 						intStack[isp++] = VarpDomain.getVarbit(id);
 						continue;
 					}
+
+					// Opcode 27: POPVARBIT [INT]
+					// Pop a value off the stack and set it as the value of the specified varbit.
 					if (opcode == 27) {
 						id = intOperands[pc];
 						isp--;
 						VarpDomain.setVarbitClient(id, intStack[isp]);
 						continue;
 					}
+
+					// Opcode 31: JLE
+					// Jump if less than or equal to.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is less than or equal to the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 31) {
 						isp -= 2;
 						if (intStack[isp + 1] >= intStack[isp]) {
@@ -2021,6 +2091,11 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 32: JGE
+					// Jump if greater than or equal to.
+					// Compares the topmost two integer values on the integer stack.
+					// If the top value is greater than or equal to the value below it, jumps forward by the requested number of instructions.
 					if (opcode == 32) {
 						isp -= 2;
 						if (intStack[isp] >= intStack[isp + 1]) {
@@ -2028,10 +2103,16 @@ public final class ScriptRunner {
 						}
 						continue;
 					}
+
+					// Opcode 33: PUSHLOC [INT]
+					// Push the integer local at the specified index onto the stack.
 					if (opcode == 33) {
 						intStack[isp++] = intLocals[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 34: POPLOC [INT]
+					// Pop an integer value off the stack and save it to the integer local at the specified index.
 					@Pc(555) int local;
 					if (opcode == 34) {
 						local = intOperands[pc];
@@ -2039,16 +2120,27 @@ public final class ScriptRunner {
 						intLocals[local] = intStack[isp];
 						continue;
 					}
+
+					// Opcode 35: PUSHLOC [STRING]
+					// Push the string local at the specified index onto the stack.
 					if (opcode == 35) {
 						stringStack[ssp++] = stringLocals[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 36: POPLOC [STRING]
+					// Pop a string value off the stack and save it to the string local at the specified index.
 					if (opcode == 36) {
 						local = intOperands[pc];
 						ssp--;
 						stringLocals[local] = stringStack[ssp];
 						continue;
 					}
+
+					// Opcode 37: STRCAT [INT]
+					// Concatenate one or more strings.
+					// Operand is number of strings, n.
+					// The top n strings are popped off the stack, concatenated, and the result pushed back onto the stack.
 					if (opcode == 37) {
 						id = intOperands[pc];
 						ssp -= id;
@@ -2056,48 +2148,83 @@ public final class ScriptRunner {
 						stringStack[ssp++] = string;
 						continue;
 					}
+
+					// Opcode 38: DECINT
+					// Decrement the integer stack pointer.
 					if (opcode == 38) {
 						isp--;
 						continue;
 					}
+
+					// Opcode 39: DECSTR
+					// Decrement the string stack pointer.
 					if (opcode == 39) {
 						ssp--;
 						continue;
 					}
+
+					// Opcode 40: CALL [INT]
+					// Load a new script and jump execution into it.
+					// Information about the current process (program counter, opcodes, locals, etc)
+					// is pushed onto the call stack prior to jump, so that execution of calling script
+					// can be resumed with the RET instruction.
 					if (opcode == 40) {
+						// Look up the new script to call.
 						id = intOperands[pc];
-						@Pc(642) ClientScript local642 = ClientScriptList.get(id);
-						@Pc(646) int[] local646 = new int[local642.intLocals];
-						@Pc(650) JagString[] local650 = new JagString[local642.stringLocals];
-						for (local652 = 0; local652 < local642.intArgs; local652++) {
-							local646[local652] = intStack[local652 + isp - local642.intArgs];
+						@Pc(642) ClientScript newScript = ClientScriptList.get(id);
+
+						// Since args are pushed onto the stack prior to the CALL instruction,
+						// we need to move them off the stack and into the new process's locals.
+						@Pc(646) int[] clientIntLocals = new int[newScript.intLocals];
+						@Pc(650) JagString[] clientStringLocals = new JagString[newScript.stringLocals];
+						for (local652 = 0; local652 < newScript.intArgs; local652++) {
+							clientIntLocals[local652] = intStack[local652 + isp - newScript.intArgs];
 						}
-						for (local652 = 0; local652 < local642.stringArgs; local652++) {
-							local650[local652] = stringStack[local652 + ssp - local642.stringArgs];
+						for (local652 = 0; local652 < newScript.stringArgs; local652++) {
+							clientStringLocals[local652] = stringStack[local652 + ssp - newScript.stringArgs];
 						}
-						isp -= local642.intArgs;
-						ssp -= local642.stringArgs;
-						@Pc(705) GoSubFrame local705 = new GoSubFrame();
-						local705.stringLocals = stringLocals;
-						local705.intLocals = intLocals;
-						local705.pc = pc;
-						local705.script = script;
+						isp -= newScript.intArgs;
+						ssp -= newScript.stringArgs;
+
+						// Store the current process's information into a frame.
+						@Pc(705) GoSubFrame currentFrame = new GoSubFrame();
+						currentFrame.stringLocals = stringLocals;
+						currentFrame.intLocals = intLocals;
+						currentFrame.pc = pc;
+						currentFrame.script = script;
+
+						// Halt execution on stack overflow.
 						if (csp >= callStack.length) {
 							throw new RuntimeException();
 						}
-						script = local642;
+
+						// Replace current process with new script.
+						script = newScript;
+
+						// Reset the program counter.
+						// On the next cycle, program counter will be incremented to 0, the start of the new script.
 						pc = -1;
-						callStack[csp++] = local705;
-						intLocals = local646;
-						intOperands = local642.intOperands;
-						opcodes = local642.opcodes;
-						stringLocals = local650;
+
+						// Push the old process onto the call stack.
+						callStack[csp++] = currentFrame;
+
+						// Replace locals/operands/opcodes with new process's.
+						intLocals = clientIntLocals;
+						intOperands = newScript.intOperands;
+						opcodes = newScript.opcodes;
+						stringLocals = clientStringLocals;
 						continue;
 					}
+
+					// Opcode 42: PUSHVARC [INT]
+					// Get the value of a varc and push it onto the stack. See VarcDomain.java for details on varcs.
 					if (opcode == 42) {
 						intStack[isp++] = VarcDomain.varcs[intOperands[pc]];
 						continue;
 					}
+
+					// Opcode 43: POPVARC [INT]
+					// Pop a value off the stack and set it as the value of the specified varc.
 					if (opcode == 43) {
 						id = intOperands[pc];
 						isp--;
@@ -2105,48 +2232,69 @@ public final class ScriptRunner {
 						DelayedStateChange.method24(id);
 						continue;
 					}
+
+					// Opcode 44: MALLOC [INT]
+					// Allocate a page of memory.
+					// First 16 bits of operand specify the page number (0-4).
+					// Last 16 bits of operand specify whether to fill page with 0's (0x69) or 0xFF's (any other value).
+					// Amount of memory to allocate (0-5000 bytes) must be pushed onto the stack before calling MALLOC.
 					if (opcode == 44) {
 						id = intOperands[pc] >> 16;
 						isp--;
 						int3 = intStack[isp];
 						int1 = intOperands[pc] & 0xFFFF;
 						if (int3 >= 0 && int3 <= 5000) {
-							anIntArray140[id] = int3;
-							@Pc(828) byte local828 = -1;
+							memoryPageSizes[id] = int3;
+							@Pc(828) byte memValue = -1;
 							if (int1 == 105) {
-								local828 = 0;
+								memValue = 0;
 							}
 							local652 = 0;
 							while (true) {
 								if (int3 <= local652) {
 									continue nextOp;
 								}
-								anIntArrayArray33[id][local652] = local828;
+								memoryPageTable[id][local652] = memValue;
 								local652++;
 							}
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 45: MREAD [INT]
+					// Read a value from memory and push it onto the stack.
+					// Operand specifies the page number (0-4).
+					// Address within that page (0-5000) must be pushed onto the stack before calling MREAD.
 					if (opcode == 45) {
 						id = intOperands[pc];
 						isp--;
 						int1 = intStack[isp];
-						if (int1 >= 0 && int1 < anIntArray140[id]) {
-							intStack[isp++] = anIntArrayArray33[id][int1];
+						if (int1 >= 0 && int1 < memoryPageSizes[id]) {
+							intStack[isp++] = memoryPageTable[id][int1];
 							continue;
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 46: MWRITE [INT]
+					// Pop a value off the stack and write it into memory.
+					// Operand specifies the page number (0-4).
+					// Two values must be pushed onto the stack before calling MWRITE:
+					// - Value to write (top of stack)
+					// - Address within page (0-5000) to write to
 					if (opcode == 46) {
 						id = intOperands[pc];
 						isp -= 2;
 						int1 = intStack[isp];
-						if (int1 >= 0 && int1 < anIntArray140[id]) {
-							anIntArrayArray33[id][int1] = intStack[isp + 1];
+						if (int1 >= 0 && int1 < memoryPageSizes[id]) {
+							memoryPageTable[id][int1] = intStack[isp + 1];
 							continue;
 						}
 						throw new RuntimeException();
 					}
+
+					// Opcode 47: PUSHVARCSTR [INT]
+					// Get the value of a varcstring and push it onto the stack. See VarcDomain.java for details on varcstrings.
 					if (opcode == 47) {
 						value = VarcDomain.varcstrs[intOperands[pc]];
 						if (value == null) {
@@ -2155,6 +2303,9 @@ public final class ScriptRunner {
 						stringStack[ssp++] = value;
 						continue;
 					}
+
+					// Opcode 48: POPVARCSTR [INT]
+					// Pop a value off the stack and set it as the value of the specified varcstring.
 					if (opcode == 48) {
 						id = intOperands[pc];
 						ssp--;
@@ -2162,117 +2313,198 @@ public final class ScriptRunner {
 						DelayedStateChange.method1840(id);
 						continue;
 					}
+
+					// Opcode 51: SWITCH [INT]
+					// Switch statement - jump to one of multiple options depending on value of case.
+					// This instruction makes use of a "switch table" (or jump table),
+					// with one table per supported operand to switch off of.
+					// Each switch table is indexed by the value, or case, of the operand.
+					// For example, in the statement `switch myVar { case 1: break; case 2: break; }`
+					// The switch operand is `myVar` and the two cases are `1` and `2`.
+					// In these scripts, the switches and cases are compiled down to numeric values.
+					// Operand is the switch operand to key off of.
+					// Value/case of the operand must be pushed onto the stack before calling SWITCH.
+					// If pushed value/case matches the value in the switch table, then the jump in the table is performed.
 					if (opcode == 51) {
-						@Pc(992) HashTable local992 = script.switchTables[intOperands[pc]];
+						@Pc(992) HashTable switchTable = script.switchTables[intOperands[pc]];
 						isp--;
-						@Pc(1002) IntNode local1002 = (IntNode) local992.get(intStack[isp]);
-						if (local1002 != null) {
-							pc += local1002.value;
+						@Pc(1002) IntNode caseJump = (IntNode) switchTable.get(intStack[isp]);
+						if (caseJump != null) {
+							pc += caseJump.value;
 						}
 						continue;
 					}
 				}
-				@Pc(1020) boolean local1020;
-				local1020 = intOperands[pc] == 1;
-				@Pc(1182) Component component;
+				
+				// Interface manipulating opcodes.
+				// All of these opcodes target an interface component, stored in one of two slots in memory.
+				// Component slot is specified by operand - 1 for slot 1, 0 for slot 2.
+				@Pc(1020) boolean componentSlot1;
+				componentSlot1 = intOperands[pc] == 1;
+				@Pc(1182) Component component1;
 				@Pc(1052) int int2;
-				@Pc(1063) Component local1063;
-				@Pc(1087) int local1087;
-				@Pc(1256) Component local1256;
+				@Pc(1063) Component component2;
+				@Pc(1087) int int4;
+				@Pc(1256) Component component3;
 				if (opcode < 300) {
+
+					// Opcode 100: IFACEADD [SLOT]
+					// Creates a new child component underneath an existing interface component.
+					// The resulting created component is saved to the requested component slot.
+					// Three values must be pushed onto the stack before calling IFACEADD:
+					// - Id of the parent component to add to (top of stack)
+					// - Type of component to create
+					// - Id of the child component to create (bottom of stack)
+					// Child components must be created in order with ids starting from 0.
 					if (opcode == 100) {
 						isp -= 3;
 						int1 = intStack[isp];
 						int3 = intStack[isp + 1];
 						int2 = intStack[isp + 2];
 						if (int3 != 0) {
-							local1063 = InterfaceList.getComponent(int1);
-							if (local1063.createdComponents == null) {
-								local1063.createdComponents = new Component[int2 + 1];
+							// Look up interface by id.
+							component2 = InterfaceList.getComponent(int1);
+							
+							// Initialize component list, if not yet initialized.
+							if (component2.createdComponents == null) {
+								component2.createdComponents = new Component[int2 + 1];
 							}
-							if (int2 >= local1063.createdComponents.length) {
-								@Pc(1085) Component[] local1085 = new Component[int2 + 1];
-								for (local1087 = 0; local1087 < local1063.createdComponents.length; local1087++) {
-									local1085[local1087] = local1063.createdComponents[local1087];
+
+							// If requested component id outside initialized range, dynamically expand component list to fit it.
+							if (int2 >= component2.createdComponents.length) {
+								@Pc(1085) Component[] subcomponents = new Component[int2 + 1];
+								for (int4 = 0; int4 < component2.createdComponents.length; int4++) {
+									subcomponents[int4] = component2.createdComponents[int4];
 								}
-								local1063.createdComponents = local1085;
+								component2.createdComponents = subcomponents;
 							}
-							if (int2 > 0 && local1063.createdComponents[int2 - 1] == null) {
+
+							// Halt execution if requested component id is non-consecutive with previous requests.
+							// This is to prevent gaps in the component list.
+							if (int2 > 0 && component2.createdComponents[int2 - 1] == null) {
 								throw new RuntimeException("Gap at:" + (int2 - 1));
 							}
-							@Pc(1137) Component local1137 = new Component();
-							local1137.if3 = true;
-							local1137.createdComponentId = int2;
-							local1137.overlayer = local1137.id = local1063.id;
-							local1137.type = int3;
-							local1063.createdComponents[int2] = local1137;
-							if (local1020) {
-								staticActiveComponent1 = local1137;
+
+							// Create new component as a child of the interface component.
+							@Pc(1137) Component newComponent = new Component();
+							newComponent.if3 = true;
+							newComponent.createdComponentId = int2;
+							newComponent.overlayer = newComponent.id = component2.id;
+							newComponent.type = int3;
+							component2.createdComponents[int2] = newComponent;
+
+							// Store newly-created component in the requested slot.
+							if (componentSlot1) {
+								staticActiveComponent1 = newComponent;
 							} else {
-								staticActiveComponent2 = local1137;
+								staticActiveComponent2 = newComponent;
 							}
-							InterfaceList.redraw(local1063);
+
+							// Redraw the interface to display the new component.
+							InterfaceList.redraw(component2);
 							continue;
 						}
 						throw new RuntimeException();
 					}
-					@Pc(1204) Component local1204;
+
+					// Opcode 101: IFACEDEL [SLOT]
+					// Deletes the component stored in the specified component slot.
+					// This is done by removing the component from its parent interface.
+					@Pc(1204) Component component4;
 					if (opcode == 101) {
-						component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
-						if (component.createdComponentId == -1) {
-							if (!local1020) {
+						// Get component from specified component slot.
+						component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
+
+						// Component id -1 has some special meaning and can't be deleted.
+						if (component1.createdComponentId == -1) {
+							if (!componentSlot1) {
 								throw new RuntimeException("Tried to cc_delete static active-component!");
 							}
 							throw new RuntimeException("Tried to .cc_delete static .active-component!");
 						}
-						local1204 = InterfaceList.getComponent(component.id);
-						local1204.createdComponents[component.createdComponentId] = null;
-						InterfaceList.redraw(local1204);
+
+						// Remove component from its parent component list.
+						component4 = InterfaceList.getComponent(component1.id);
+						component4.createdComponents[component1.createdComponentId] = null;
+
+						// Redraw the parent interface to remove the deleted component.
+						InterfaceList.redraw(component4);
 						continue;
 					}
+
+					// Opcode 102: IFACECLEAR
+					// Clears all child components of a specified interface component.
+					// Id of the component to clear must be pushed onto the stack before calling IFACECLEAR.
 					if (opcode == 102) {
 						isp--;
-						component = InterfaceList.getComponent(intStack[isp]);
-						component.createdComponents = null;
-						InterfaceList.redraw(component);
+						component1 = InterfaceList.getComponent(intStack[isp]);
+						component1.createdComponents = null;
+						InterfaceList.redraw(component1);
 						continue;
 					}
+
+					// Opcode 200: IFACESETCHILD [SLOT]
+					// Stores a component in the specified component slot.
+					// Two values must be pushed onto the stack before calling IFACESETCHILD:
+					// - Id of the desired component's parent (top of stack)
+					// - Id of the desired child component to be stored in the component slot.
+					// In addition to updating the component slot, this instruction also pushes a status code to the stack:
+					// - 0 indicates failure (component does not exist or has invalid id)
+					// - 1 indicates success
 					if (opcode == Cs2Opcodes.setChild) {
 						isp -= 2;
 						int1 = intStack[isp];
 						int3 = intStack[isp + 1];
-						local1256 = InterfaceList.method1418(int1, int3);
-						if (local1256 != null && int3 != -1) {
+						component3 = InterfaceList.getComponent(int1, int3);
+						if (component3 != null && int3 != -1) {
 							intStack[isp++] = 1;
-							if (local1020) {
-								staticActiveComponent1 = local1256;
+							if (componentSlot1) {
+								staticActiveComponent1 = component3;
 							} else {
-								staticActiveComponent2 = local1256;
+								staticActiveComponent2 = component3;
 							}
 							continue;
 						}
 						intStack[isp++] = 0;
 						continue;
 					}
+
+					// Opcode 201: IFACESET [SLOT]
+					// Stores a component in the specified component slot.
+					// Id of the component to store must be pushed onto the stack before calling IFACESET.
+					// In addition to updating the component slot, this instruction also pushes a status code to the stack:
+					// - 0 indicates failure (component does not exist)
+					// - 1 indicates success
 					if (opcode == Cs2Opcodes.setChild2) {
 						isp--;
 						int1 = intStack[isp];
-						local1204 = InterfaceList.getComponent(int1);
-						if (local1204 == null) {
+						component4 = InterfaceList.getComponent(int1);
+						if (component4 == null) {
 							intStack[isp++] = 0;
 						} else {
 							intStack[isp++] = 1;
-							if (local1020) {
-								staticActiveComponent1 = local1204;
+							if (componentSlot1) {
+								staticActiveComponent1 = component4;
 							} else {
-								staticActiveComponent2 = local1204;
+								staticActiveComponent2 = component4;
 							}
 						}
 						continue;
 					}
-				} else {
+				} 
+				else {
+
+					// Player appearance manipulating opcodes.
+					// These opcodes manipulate the appearance of the user's player model,
+					// which is divided into individual body parts.
 					@Pc(12388) boolean local12388;
 					if (opcode < 500) {
+						// Opcode 403: SETPLAYERMESH
+						// Sets the base mesh for a single part of the player's model.
+						// Two values must be pushed onto the stack before calling SETPLAYERMESH:
+						// - Id of the body part to update (top of stack)
+						// - Id of the base mesh to set the body part to
+						// If body part not found in male or female features, this instruction will NOOP.
 						if (opcode == Cs2Opcodes.setBaseIdkit) {
 							isp -= 2;
 							int3 = intStack[isp + 1];
@@ -2295,6 +2527,12 @@ public final class ScriptRunner {
 								int2++;
 							}
 						}
+
+						// Opcode 404: SETPLAYERCOLOR
+						// Sets the base color for a single part of the player's model.
+						// Two values must be pushed onto the stack before calling SETPLAYERCOLOR:
+						// - Id of the body part to recolor (top of stack)
+						// - The color to set the body part to
 						if (opcode == Cs2Opcodes.setBaseColor) {
 							isp -= 2;
 							int1 = intStack[isp];
@@ -2302,6 +2540,10 @@ public final class ScriptRunner {
 							PlayerList.self.appearance.setColor(int1, int3);
 							continue;
 						}
+
+						// Opcode 410: SETPLAYERGENDER
+						// Sets the gender of the player's model.
+						// Gender must be pushed to the stack before calling SETPLAYERGENDER (0 for male, 1 for female).
 						if (opcode == Cs2Opcodes.setFemale) {
 							isp--;
 							local12388 = intStack[isp] != 0;
@@ -2309,308 +2551,421 @@ public final class ScriptRunner {
 							continue;
 						}
 					} else {
+						// The below opcodes manipulate interface components identified either by
+						// a component slot or by a component id.
+						// In order to target a component by id, the opcode needs to have 1000 added to it, 
+						// and the id needs to be pushed to the stack AFTER all other opcode-specific stack parameters.
+						// For example, opcode 1105 sets a sprite to be drawn on a component.
+						// To set the sprite on component slot 1, push the sprite id to teh stack and call opcode 1105 with operand 1.
+						// To set the sprite on component id, push the sprite id and component id to the stack and call opcode 2105.
 						@Pc(1552) boolean local1552;
 						if ((opcode < 1000 || opcode >= 1100) && (opcode < 2000 || opcode >= 2100)) {
 							@Pc(2522) JagString str1;
 							if (opcode >= 1100 && opcode < 1200 || !(opcode < 2100 || opcode >= 2200)) {
 								if (opcode < 2000) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 								} else {
 									opcode -= 1000;
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 								}
+
+								// Opcode 1100: SETSCROLLPOS
+								// Set the scroll position of the target component.
+								// Position must be pushed to the stack prior to calling SETSCROLLPOS (y, then x at top of stack).
+								// If scroll position is outside of max allowed bounds for interface, position is clamped.
 								if (opcode == Cs2Opcodes.setScrollPos) {
 									isp -= 2;
-									component.scrollX = intStack[isp];
-									if (component.scrollX > component.scrollMaxH - component.width) {
-										component.scrollX = component.scrollMaxH - component.width;
+									component1.scrollX = intStack[isp];
+									if (component1.scrollX > component1.scrollMaxH - component1.width) {
+										component1.scrollX = component1.scrollMaxH - component1.width;
 									}
-									if (component.scrollX < 0) {
-										component.scrollX = 0;
+									if (component1.scrollX < 0) {
+										component1.scrollX = 0;
 									}
-									component.scrollY = intStack[isp + 1];
-									if (component.scrollY > component.scrollMaxV - component.height) {
-										component.scrollY = component.scrollMaxV - component.height;
+									component1.scrollY = intStack[isp + 1];
+									if (component1.scrollY > component1.scrollMaxV - component1.height) {
+										component1.scrollY = component1.scrollMaxV - component1.height;
 									}
-									if (component.scrollY < 0) {
-										component.scrollY = 0;
+									if (component1.scrollY < 0) {
+										component1.scrollY = 0;
 									}
-									InterfaceList.redraw(component);
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method2353(component.id);
+									InterfaceList.redraw(component1);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method2353(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1101: SETRGB
+								// Set the RGB color of the target component.
+								// Color must be pushed to the stack prior to calling SETRGB.
 								if (opcode == Cs2Opcodes.setRGB) {
 									isp--;
-									component.color = intStack[isp];
-									InterfaceList.redraw(component);
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4224(component.id);
+									component1.color = intStack[isp];
+									InterfaceList.redraw(component1);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4224(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1102: SETFILLED
+								// Set the filled status of the target component.
+								// Status must be pushed to the stack prior to calling SETFILLED (0 for unfilled, 1 for filled).
 								if (opcode == Cs2Opcodes.setFilled) {
 									isp--;
-									component.filled = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.filled = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1103: SETTRANS
+								// Set the transparency of the target component.
+								// Transparency alpha value must be pushed to the stack prior to calling SETTRANS.
 								if (opcode == Cs2Opcodes.setTrans) {
 									isp--;
-									component.alpha = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.alpha = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1104: SETLINEWID
+								// Set the line width of the target component.
+								// Line width must be pushed to the stack prior to calling SETLINEWID.
 								if (opcode == Cs2Opcodes.setLineWid) {
 									isp--;
-									component.lineWidth = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.lineWidth = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1105: SETSPRITE
+								// Set the 2D sprite to be drawn over the target component.
+								// Id of the sprite must be pushed to the stack prior to calling SETSPRITE.
 								if (opcode == Cs2Opcodes.setSprite) {
 									isp--;
-									component.spriteId = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.spriteId = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1106: SET2DROT
+								// Set the angle of rotation of the target component about the Z axis.
+								// Angle value must be pushed to the stack prior to calling SET2DROT.
 								if (opcode == Cs2Opcodes.set2DAngle) {
 									isp--;
-									component.angle2d = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.angle2d = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1107: SETTILE
+								// Set the sprite tiling mode of the target component.
+								// Mode must be pushed to the stack prior to calling SETTILE (0 for no tiling, 1 for tiling).
 								if (opcode == Cs2Opcodes.setSpriteTiling) {
 									isp--;
-									component.spriteTiling = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.spriteTiling = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1108: SETMODEL
+								// Set the 3D model to be drawn over the target component.
+								// Id of the model must be pushed to the stack prior to calling SETMODEL.
 								if (opcode == Cs2Opcodes.setModel) {
-									component.modelType = 1;
+									component1.modelType = 1;
 									isp--;
-									component.modelId = intStack[isp];
-									InterfaceList.redraw(component);
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4600(component.id);
+									component1.modelId = intStack[isp];
+									InterfaceList.redraw(component1);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4600(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1109: TFMODEL
+								// Transform the 3D model bound to the target component, if any.
+								// Six values must be pushed to the stack prior to calling TFMODEL:
+								// - Translation along the X axis (top of stack)
+								// - Translation along the Z axis
+								// - Rotation around the X axis
+								// - Rotation around the Y axis
+								// - Translation along the Y axis
+								// - Zoom level
 								if (opcode == Cs2Opcodes.set3DRotation) {
 									isp -= 6;
-									component.modelXOffset = intStack[isp];
-									component.modelZOffset = intStack[isp + 1];
-									component.modelXAngle = intStack[isp + 2];
-									component.modelYAngle = intStack[isp + 3];
-									component.modelYOffset = intStack[isp + 4];
-									component.modelZoom = intStack[isp + 5];
-									InterfaceList.redraw(component);
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.setComponentModelAngleClient(component.id);
-										DelayedStateChange.setComponentModelOffsetClient(component.id);
+									component1.modelXOffset = intStack[isp];
+									component1.modelZOffset = intStack[isp + 1];
+									component1.modelXAngle = intStack[isp + 2];
+									component1.modelYAngle = intStack[isp + 3];
+									component1.modelYOffset = intStack[isp + 4];
+									component1.modelZoom = intStack[isp + 5];
+									InterfaceList.redraw(component1);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.setComponentModelAngleClient(component1.id);
+										DelayedStateChange.setComponentModelOffsetClient(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1110: SETANIM
+								// Set the animation for the 3D model bound to the target component, if any.
+								// Id of the animation must be pushed to the stack prior to calling SETANIM.
 								if (opcode == Cs2Opcodes.setAnimation) {
 									isp--;
 									int3 = intStack[isp];
-									if (component.modelSeqId != int3) {
-										component.modelSeqId = int3;
-										component.anInt510 = 0;
-										component.anInt500 = 0;
-										component.anInt496 = 1;
-										InterfaceList.redraw(component);
+									if (component1.modelSeqId != int3) {
+										component1.modelSeqId = int3;
+										component1.anInt510 = 0;
+										component1.anInt500 = 0;
+										component1.anInt496 = 1;
+										InterfaceList.redraw(component1);
 									}
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method3345(component.id);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method3345(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1111: SETMODELPROJ
+								// Set the projection mode of the 3D model bound to the target component, if any.
+								// Projection mode must be pushed to the stack prior to calling SETMODELPROJ (0 for perspective, 1 for orthogonal).
 								if (opcode == Cs2Opcodes.setModelOrthog) {
 									isp--;
-									component.modelOrtho = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.modelOrtho = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1112: SETTEXT
+								// Set the text to be drawn on the target component.
+								// Text must be pushed to the string stack prior to calling SETTEXT.
 								if (opcode == Cs2Opcodes.setText) {
 									ssp--;
 									str1 = stringStack[ssp];
-									if (!str1.strEquals(component.text)) {
-										component.text = str1;
-										InterfaceList.redraw(component);
+									if (!str1.strEquals(component1.text)) {
+										component1.text = str1;
+										InterfaceList.redraw(component1);
 									}
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method3096(component.id);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method3096(component1.id);
 									}
 									continue;
 								}
+
+								// Opcode 1113: SETFONT
+								// Set the font that text is drawn to the target component, if any.
+								// Id of the font must be pushed to the stack prior to calling SETFONT.
 								if (opcode == Cs2Opcodes.setFont) {
 									isp--;
-									component.font = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.font = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1114: SETTEXTALIGN
+								// Set the text alignment of the text drawn to the target component, if any.
+								// Three values must be pushed to the stack prior to calling SETTEXTALIGN:
+								// - Horizontal alignment (top of stack)
+								// - Vertical alignment
+								// - Vertical padding, in pixels
 								if (opcode == Cs2Opcodes.setTextAlignment) {
 									isp -= 3;
-									component.halign = intStack[isp];
-									component.valign = intStack[isp + 1];
-									component.vpadding = intStack[isp + 2];
-									InterfaceList.redraw(component);
+									component1.halign = intStack[isp];
+									component1.valign = intStack[isp + 1];
+									component1.vpadding = intStack[isp + 2];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1115: SETSHADOW
+								// Toggle shadows for text drawn to the target component, if any.
+								// Toggle must be pushed to the stack prior to calling SETTEXTSHADOW (0 for disabled, 1 for enabled).
 								if (opcode == Cs2Opcodes.setTextAntiMacro) {
 									isp--;
-									component.shadowed = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.shadowed = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1116: SETBORDERWID
+								// Set the width/thickness of the target component's border/outline.
+								// Border width in pixels must be pushed to the stack prior to calling SETBORDERWID.
 								if (opcode == Cs2Opcodes.setOutlineThickness) {
 									isp--;
-									component.outlineThickness = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.outlineThickness = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1117: SETSHADOWCOLOR
+								// Set the shadow color of the text drawn to the target component, if any.
+								// Shadow color must be pushed to the stack prior to calling SETSHADOWCOLOR.
 								if (opcode == Cs2Opcodes.setShadowColor) {
 									isp--;
-									component.shadowColor = intStack[isp];
-									InterfaceList.redraw(component);
+									component1.shadowColor = intStack[isp];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1118: SETVFLIP
+								// Toggle vertical flip of the target component.
+								// Toggle must be pushed to the stack prior to calling SETVFLIP (0 for no flip, 1 for flip).
 								if (opcode == Cs2Opcodes.setVFlip) {
 									isp--;
-									component.vFlip = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.vFlip = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1119: SETHFLIP
+								// Toggle horizontal flip of the target component.
+								// Toggle must be pushed to the stack prior to calling SETHFLIP (0 for no flip, 1 for flip).
 								if (opcode == Cs2Opcodes.setHFlip) {
 									isp--;
-									component.hFlip = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.hFlip = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1120: SETSCROLLMAX
+								// Set the max allowed scroll position for the target component.
+								// Max values must be pushed to the stack prior to calling SETSCROLLMAX (y, then x at top of stack).
 								if (opcode == Cs2Opcodes.setScrollMax) {
 									isp -= 2;
-									component.scrollMaxH = intStack[isp];
-									component.scrollMaxV = intStack[isp + 1];
-									InterfaceList.redraw(component);
-									if (component.type == 0) {
-										InterfaceList.method531(component, false);
+									component1.scrollMaxH = intStack[isp];
+									component1.scrollMaxV = intStack[isp + 1];
+									InterfaceList.redraw(component1);
+									if (component1.type == 0) {
+										InterfaceList.method531(component1, false);
 									}
 									continue;
 								}
+
+								// Opcode 1121: TBD
+								// I think this has something to do with camera FOV.
+								// 2 values on stack, suspect top is near distance and bottom is far distance.
 								if (opcode == 1121) {
 									isp -= 2;
-									component.aShort11 = (short) intStack[isp];
-									component.aShort10 = (short) intStack[isp + 1];
-									InterfaceList.redraw(component);
+									component1.aShort11 = (short) intStack[isp];
+									component1.aShort10 = (short) intStack[isp + 1];
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1122: SETALPHA
+								// Toggle alpha of the target component.
+								// Toggle must be pushed to the stack prior to calling SETALPHA (0 for disabled/black, 1 for enabled/transparent).
 								if (opcode == Cs2Opcodes.setAlpha) {
 									isp--;
-									component.hasAlpha = intStack[isp] == 1;
-									InterfaceList.redraw(component);
+									component1.hasAlpha = intStack[isp] == 1;
+									InterfaceList.redraw(component1);
 									continue;
 								}
+
+								// Opcode 1123: SETZOOM
+								// Set the zoom of the 3D model bound to the target component, if any.
+								// Zoom amount must be pushed to the stack prior to calling SETZOOM.
 								if (opcode == Cs2Opcodes.set3DViewDistance) {
 									isp--;
-									component.modelZoom = intStack[isp];
-									InterfaceList.redraw(component);
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.setComponentModelAngleClient(component.id);
+									component1.modelZoom = intStack[isp];
+									InterfaceList.redraw(component1);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.setComponentModelAngleClient(component1.id);
 									}
 									continue;
 								}
 							} else if (opcode >= 1200 && opcode < 1300 || !(opcode < 2200 || opcode >= 2300)) {
 								if (opcode < 2000) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 								} else {
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 									opcode -= 1000;
 								}
-								InterfaceList.redraw(component);
+								InterfaceList.redraw(component1);
 								if (opcode == Cs2Opcodes.setItem || opcode == Cs2Opcodes.setItemNoNum) {
 									isp -= 2;
 									int2 = intStack[isp + 1];
 									int3 = intStack[isp];
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.setComponentObjClient(component.id);
-										DelayedStateChange.setComponentModelAngleClient(component.id);
-										DelayedStateChange.setComponentModelOffsetClient(component.id);
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.setComponentObjClient(component1.id);
+										DelayedStateChange.setComponentModelAngleClient(component1.id);
+										DelayedStateChange.setComponentModelOffsetClient(component1.id);
 									}
 									if (int3 == -1) {
-										component.modelId = -1;
-										component.modelType = 1;
-										component.objId = -1;
+										component1.modelId = -1;
+										component1.modelType = 1;
+										component1.objId = -1;
 									} else {
-										component.objId = int3;
-										component.objCount = int2;
+										component1.objId = int3;
+										component1.objCount = int2;
 										@Pc(13416) ObjType local13416 = ObjTypeList.get(int3);
-										component.modelYOffset = local13416.zAngle2D;
-										component.modelXOffset = local13416.xOffset2D;
-										component.modelXAngle = local13416.xAngle2D;
-										component.modelZOffset = local13416.yOffset2D;
-										component.modelYAngle = local13416.yAngle2D;
-										component.modelZoom = local13416.zoom2d;
-										if (component.anInt451 > 0) {
-											component.modelZoom = component.modelZoom * 32 / component.anInt451;
-										} else if (component.baseWidth > 0) {
-											component.modelZoom = component.modelZoom * 32 / component.baseWidth;
+										component1.modelYOffset = local13416.zAngle2D;
+										component1.modelXOffset = local13416.xOffset2D;
+										component1.modelXAngle = local13416.xAngle2D;
+										component1.modelZOffset = local13416.yOffset2D;
+										component1.modelYAngle = local13416.yAngle2D;
+										component1.modelZoom = local13416.zoom2d;
+										if (component1.anInt451 > 0) {
+											component1.modelZoom = component1.modelZoom * 32 / component1.anInt451;
+										} else if (component1.baseWidth > 0) {
+											component1.modelZoom = component1.modelZoom * 32 / component1.baseWidth;
 										}
-										component.objDrawText = opcode != Cs2Opcodes.setItemNoNum;
+										component1.objDrawText = opcode != Cs2Opcodes.setItemNoNum;
 									}
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setNpcHead) {
-									component.modelType = 2;
+									component1.modelType = 2;
 									isp--;
-									component.modelId = intStack[isp];
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4600(component.id);
+									component1.modelId = intStack[isp];
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4600(component1.id);
 									}
 									continue;
 								}
 								if (opcode == 1202) {
-									component.modelType = 3;
-									component.modelId = PlayerList.self.appearance.method1952();
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4600(component.id);
+									component1.modelType = 3;
+									component1.modelId = PlayerList.self.appearance.method1952();
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4600(component1.id);
 									}
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setPlayerHead) {
-									component.modelType = 6;
+									component1.modelType = 6;
 									isp--;
-									component.modelId = intStack[isp];
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4600(component.id);
+									component1.modelId = intStack[isp];
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4600(component1.id);
 									}
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setPlayerFull) {
-									component.modelType = 5;
+									component1.modelType = 5;
 									isp--;
-									component.modelId = intStack[isp];
-									if (component.createdComponentId == -1) {
-										DelayedStateChange.method4600(component.id);
+									component1.modelId = intStack[isp];
+									if (component1.createdComponentId == -1) {
+										DelayedStateChange.method4600(component1.id);
 									}
 									continue;
 								}
 							} else if (opcode >= 1300 && opcode < 1400 || opcode >= 2300 && opcode < 2400) {
 								if (opcode >= 2000) {
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 									opcode -= 1000;
 								} else {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 								}
 								if (opcode == Cs2Opcodes.setContextMenuOption) {
 									isp--;
 									int3 = intStack[isp] - 1;
 									if (int3 >= 0 && int3 <= 9) {
 										ssp--;
-										component.method480(stringStack[ssp], int3);
+										component1.method480(stringStack[ssp], int3);
 										continue;
 									}
 									ssp--;
@@ -2620,43 +2975,43 @@ public final class ScriptRunner {
 									isp -= 2;
 									int2 = intStack[isp + 1];
 									int3 = intStack[isp];
-									component.aClass13_5 = InterfaceList.method1418(int3, int2);
+									component1.aClass13_5 = InterfaceList.getComponent(int3, int2);
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setDragRenderBehaviour) {
 									isp--;
-									component.dragRenderBehavior = intStack[isp] == 1;
+									component1.dragRenderBehavior = intStack[isp] == 1;
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setDragDeadZone) {
 									isp--;
-									component.dragDeadzone = intStack[isp];
+									component1.dragDeadzone = intStack[isp];
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setDragDeadTime) {
 									isp--;
-									component.dragDeadtime = intStack[isp];
+									component1.dragDeadtime = intStack[isp];
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setOptionBase) {
 									ssp--;
-									component.optionBase = stringStack[ssp];
+									component1.optionBase = stringStack[ssp];
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setTargetVerb) {
 									ssp--;
-									component.optionCircumfix = stringStack[ssp];
+									component1.optionCircumfix = stringStack[ssp];
 									continue;
 								}
 								if (opcode == Cs2Opcodes.setNoOptions) {
-									component.ops = null;
+									component1.ops = null;
 									continue;
 								}
 								if (opcode == 1308) {
 									isp--;
-									component.anInt484 = intStack[isp];
+									component1.anInt484 = intStack[isp];
 									isp--;
-									component.anInt499 = intStack[isp];
+									component1.anInt499 = intStack[isp];
 									continue;
 								}
 								if (opcode == 1309) {
@@ -2665,7 +3020,7 @@ public final class ScriptRunner {
 									isp--;
 									int2 = intStack[isp];
 									if (int2 >= 1 && int2 <= 10) {
-										component.method477(int2 - 1, int3);
+										component1.method477(int2 - 1, int3);
 									}
 									continue;
 								}
@@ -2673,11 +3028,11 @@ public final class ScriptRunner {
 								@Pc(4859) int c;
 								if (opcode >= 1400 && opcode < 1500 || opcode >= 2400 && opcode < 2500) {
 									if (opcode < 2000) {
-										component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+										component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 									} else {
 										opcode -= 1000;
 										isp--;
-										component = InterfaceList.getComponent(intStack[isp]);
+										component1 = InterfaceList.getComponent(intStack[isp]);
 									}
 									@Pc(12937) int[] local12937 = null;
 									ssp--;
@@ -2711,292 +3066,292 @@ public final class ScriptRunner {
 									} else {
 										local13000[0] = c;
 									}
-									component.aBoolean25 = true;
+									component1.aBoolean25 = true;
 									if (opcode == Cs2Opcodes.hookMousePress) {
-										component.onClickRepeat = local13000;
+										component1.onClickRepeat = local13000;
 									} else if (opcode == Cs2Opcodes.hookDraggedOver) {
-										component.onHold = local13000;
+										component1.onHold = local13000;
 									} else if (opcode == Cs2Opcodes.hookMouseRelease) {
-										component.onRelease = local13000;
+										component1.onRelease = local13000;
 									} else if (opcode == Cs2Opcodes.hookMouseEnter) {
-										component.onMouseOver = local13000;
+										component1.onMouseOver = local13000;
 									} else if (opcode == Cs2Opcodes.hookMouseExit) {
-										component.onMouseLeave = local13000;
+										component1.onMouseLeave = local13000;
 									} else if (opcode == Cs2Opcodes.hookDragStart) {
-										component.onDragStart = local13000;
+										component1.onDragStart = local13000;
 									} else if (opcode == Cs2Opcodes.hookUseWith) {
-										component.onUseWith = local13000;
+										component1.onUseWith = local13000;
 									} else if (opcode == Cs2Opcodes.hookVARP) {
-										component.varpTriggers = local12937;
-										component.onVarpTransmit = local13000;
+										component1.varpTriggers = local12937;
+										component1.onVarpTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookFrame) {
-										component.onTimer = local13000;
+										component1.onTimer = local13000;
 									} else if (opcode == Cs2Opcodes.hookOptionClick) {
-										component.onOptionClick = local13000;
+										component1.onOptionClick = local13000;
 									} else if (opcode == Cs2Opcodes.hookDragRelease) {
-										component.onDragRelease = local13000;
+										component1.onDragRelease = local13000;
 									} else if (opcode == Cs2Opcodes.hookDrag) {
-										component.onDrag = local13000;
+										component1.onDrag = local13000;
 									} else if (opcode == Cs2Opcodes.hookMouseHover) {
-										component.onMouseRepeat = local13000;
+										component1.onMouseRepeat = local13000;
 									} else if (opcode == Cs2Opcodes.hookContainer) {
-										component.inventoryTriggers = local12937;
-										component.onInvTransmit = local13000;
+										component1.inventoryTriggers = local12937;
+										component1.onInvTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookSkill) {
-										component.statTriggers = local12937;
-										component.onStatTransmit = local13000;
+										component1.statTriggers = local12937;
+										component1.onStatTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookOnUse) {
-										component.onUse = local13000;
+										component1.onUse = local13000;
 									} else if (opcode == Cs2Opcodes.hookScroll) {
-										component.onScroll = local13000;
+										component1.onScroll = local13000;
 									} else if (opcode == Cs2Opcodes.hookMsg) {
-										component.onMsg = local13000;
+										component1.onMsg = local13000;
 									} else if (opcode == Cs2Opcodes.hookKey) {
-										component.onKey = local13000;
+										component1.onKey = local13000;
 									} else if (opcode == Cs2Opcodes.hookFriendList) {
-										component.onFriendTransmit = local13000;
+										component1.onFriendTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookClanList) {
-										component.onClanTransmit = local13000;
+										component1.onClanTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookMiscData) {
-										component.onMiscTransmit = local13000;
+										component1.onMiscTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookDialogAbort) {
-										component.onDialogAbort = local13000;
+										component1.onDialogAbort = local13000;
 									} else if (opcode == Cs2Opcodes.hookWidgetsOpenClose) {
-										component.onWidgetsOpenClose = local13000;
+										component1.onWidgetsOpenClose = local13000;
 									} else if (opcode == Cs2Opcodes.hookGEUpdate) { // if_setonstocktransmit
-										component.onStockTransmit = local13000;
+										component1.onStockTransmit = local13000;
 									} else if (opcode == Cs2Opcodes.hookMinimapUnlock) {
-										component.onMinimapUnlock = local13000;
+										component1.onMinimapUnlock = local13000;
 									} else if (opcode == Cs2Opcodes.hookResize) {
-										component.onResize = local13000;
+										component1.onResize = local13000;
 									} else if (opcode == Cs2Opcodes.hookVARC) {
-										component.onVarcTransmit = local13000;
-										component.varcTriggers = local12937;
+										component1.onVarcTransmit = local13000;
+										component1.varcTriggers = local12937;
 									} else if (opcode == Cs2Opcodes.hookSTRING) {
-										component.varcstrTriggers = local12937;
-										component.onVarcstrTransmit = local13000;
+										component1.varcstrTriggers = local12937;
+										component1.onVarcstrTransmit = local13000;
 									}
 									continue;
 								}
 								if (opcode < 1600) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 									if (opcode == Cs2Opcodes.getX) {
-										intStack[isp++] = component.x;
+										intStack[isp++] = component1.x;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getY) {
-										intStack[isp++] = component.y;
+										intStack[isp++] = component1.y;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getWidth) {
-										intStack[isp++] = component.width;
+										intStack[isp++] = component1.width;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getHeight) {
-										intStack[isp++] = component.height;
+										intStack[isp++] = component1.height;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getHidden) {
-										intStack[isp++] = component.hidden ? 1 : 0;
+										intStack[isp++] = component1.hidden ? 1 : 0;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getLayer) {
-										intStack[isp++] = component.overlayer;
+										intStack[isp++] = component1.overlayer;
 										continue;
 									}
 								} else if (opcode < 1700) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 									if (opcode == Cs2Opcodes.getScrollX) {
-										intStack[isp++] = component.scrollX;
+										intStack[isp++] = component1.scrollX;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollY) {
-										intStack[isp++] = component.scrollY;
+										intStack[isp++] = component1.scrollY;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getText) {
-										stringStack[ssp++] = component.text;
+										stringStack[ssp++] = component1.text;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollMaxH) {
-										intStack[isp++] = component.scrollMaxH;
+										intStack[isp++] = component1.scrollMaxH;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollMaxV) {
-										intStack[isp++] = component.scrollMaxV;
+										intStack[isp++] = component1.scrollMaxV;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.get3DDistance) {
-										intStack[isp++] = component.modelZoom;
+										intStack[isp++] = component1.modelZoom;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateX) {
-										intStack[isp++] = component.modelXAngle;
+										intStack[isp++] = component1.modelXAngle;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateZ) {
-										intStack[isp++] = component.modelYOffset;
+										intStack[isp++] = component1.modelYOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateY) {
-										intStack[isp++] = component.modelYAngle;
+										intStack[isp++] = component1.modelYAngle;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getAlpha) {
-										intStack[isp++] = component.alpha;
+										intStack[isp++] = component1.alpha;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getModelXOffset) {
-										intStack[isp++] = component.modelXOffset;
+										intStack[isp++] = component1.modelXOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getModelYOffset) {
-										intStack[isp++] = component.modelZOffset;
+										intStack[isp++] = component1.modelZOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getSpriteId) {
-										intStack[isp++] = component.spriteId;
+										intStack[isp++] = component1.spriteId;
 										continue;
 									}
 								} else if (opcode < 1800) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 									if (opcode == Cs2Opcodes.getItemId) {
-										intStack[isp++] = component.objId;
+										intStack[isp++] = component1.objId;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getItemAmt) {
-										if (component.objId == -1) {
+										if (component1.objId == -1) {
 											intStack[isp++] = 0;
 										} else {
-											intStack[isp++] = component.objCount;
+											intStack[isp++] = component1.objCount;
 										}
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getChildId) {
-										intStack[isp++] = component.createdComponentId;
+										intStack[isp++] = component1.createdComponentId;
 										continue;
 									}
 								} else if (opcode < 1900) {
-									component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+									component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 									if (opcode == Cs2Opcodes.getTargetMask) {
-										intStack[isp++] = InterfaceList.getServerActiveProperties(component).getTargetMask();
+										intStack[isp++] = InterfaceList.getServerActiveProperties(component1).getTargetMask();
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getOption) {
 										isp--;
 										int3 = intStack[isp];
 										int3--;
-										if (component.ops != null && int3 < component.ops.length && component.ops[int3] != null) {
-											stringStack[ssp++] = component.ops[int3];
+										if (component1.ops != null && int3 < component1.ops.length && component1.ops[int3] != null) {
+											stringStack[ssp++] = component1.ops[int3];
 											continue;
 										}
 										stringStack[ssp++] = EMPTY_STRING;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getOptionBase) {
-										if (component.optionBase == null) {
+										if (component1.optionBase == null) {
 											stringStack[ssp++] = EMPTY_STRING;
 										} else {
-											stringStack[ssp++] = component.optionBase;
+											stringStack[ssp++] = component1.optionBase;
 										}
 										continue;
 									}
 								} else if (opcode < 2600) {
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 									if (opcode == Cs2Opcodes.getX2) {
-										intStack[isp++] = component.x;
+										intStack[isp++] = component1.x;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getY2) {
-										intStack[isp++] = component.y;
+										intStack[isp++] = component1.y;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getWidth2) {
-										intStack[isp++] = component.width;
+										intStack[isp++] = component1.width;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getHeight2) {
-										intStack[isp++] = component.height;
+										intStack[isp++] = component1.height;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.isHidden2) {
-										intStack[isp++] = component.hidden ? 1 : 0;
+										intStack[isp++] = component1.hidden ? 1 : 0;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getLayer2) {
-										intStack[isp++] = component.overlayer;
+										intStack[isp++] = component1.overlayer;
 										continue;
 									}
 								} else if (opcode < 2700) {
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 									if (opcode == Cs2Opcodes.getScrollX2) {
-										intStack[isp++] = component.scrollX;
+										intStack[isp++] = component1.scrollX;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollY2) {
-										intStack[isp++] = component.scrollY;
+										intStack[isp++] = component1.scrollY;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getText2) {
-										stringStack[ssp++] = component.text;
+										stringStack[ssp++] = component1.text;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollMaxH2) {
-										intStack[isp++] = component.scrollMaxH;
+										intStack[isp++] = component1.scrollMaxH;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getScrollMaxV2) {
-										intStack[isp++] = component.scrollMaxV;
+										intStack[isp++] = component1.scrollMaxV;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.get3DDistance2) {
-										intStack[isp++] = component.modelZoom;
+										intStack[isp++] = component1.modelZoom;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateX2) {
-										intStack[isp++] = component.modelXAngle;
+										intStack[isp++] = component1.modelXAngle;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateZ2) {
-										intStack[isp++] = component.modelYOffset;
+										intStack[isp++] = component1.modelYOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getRotateY2) {
-										intStack[isp++] = component.modelYAngle;
+										intStack[isp++] = component1.modelYAngle;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getAlpha2) {
-										intStack[isp++] = component.alpha;
+										intStack[isp++] = component1.alpha;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getModelXOffset2) {
-										intStack[isp++] = component.modelXOffset;
+										intStack[isp++] = component1.modelXOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getModelYOffset2) {
-										intStack[isp++] = component.modelZOffset;
+										intStack[isp++] = component1.modelZOffset;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getSpriteId2) {
-										intStack[isp++] = component.spriteId;
+										intStack[isp++] = component1.spriteId;
 										continue;
 									}
 								} else if (opcode < 2800) {
 									if (opcode == Cs2Opcodes.getItemId2) {
 										isp--;
-										component = InterfaceList.getComponent(intStack[isp]);
-										intStack[isp++] = component.objId;
+										component1 = InterfaceList.getComponent(intStack[isp]);
+										intStack[isp++] = component1.objId;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getItemAmt2) {
 										isp--;
-										component = InterfaceList.getComponent(intStack[isp]);
-										if (component.objId == -1) {
+										component1 = InterfaceList.getComponent(intStack[isp]);
+										if (component1.objId == -1) {
 											intStack[isp++] = 0;
 										} else {
-											intStack[isp++] = component.objCount;
+											intStack[isp++] = component1.objCount;
 										}
 										continue;
 									}
@@ -3013,14 +3368,14 @@ public final class ScriptRunner {
 									}
 									if (opcode == Cs2Opcodes.nextChild) {
 										isp--;
-										component = InterfaceList.getComponent(intStack[isp]);
-										if (component.createdComponents == null) {
+										component1 = InterfaceList.getComponent(intStack[isp]);
+										if (component1.createdComponents == null) {
 											intStack[isp++] = 0;
 											continue;
 										}
-										int3 = component.createdComponents.length;
-										for (int2 = 0; int2 < component.createdComponents.length; int2++) {
-											if (component.createdComponents[int2] == null) {
+										int3 = component1.createdComponents.length;
+										for (int2 = 0; int2 < component1.createdComponents.length; int2++) {
+											if (component1.createdComponents[int2] == null) {
 												int3 = int2;
 												break;
 											}
@@ -3042,27 +3397,27 @@ public final class ScriptRunner {
 									}
 								} else if (opcode < 2900) {
 									isp--;
-									component = InterfaceList.getComponent(intStack[isp]);
+									component1 = InterfaceList.getComponent(intStack[isp]);
 									if (opcode == Cs2Opcodes.getTargetMask2) {
-										intStack[isp++] = InterfaceList.getServerActiveProperties(component).getTargetMask();
+										intStack[isp++] = InterfaceList.getServerActiveProperties(component1).getTargetMask();
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getOption2) {
 										isp--;
 										int3 = intStack[isp];
 										int3--;
-										if (component.ops != null && component.ops.length > int3 && component.ops[int3] != null) {
-											stringStack[ssp++] = component.ops[int3];
+										if (component1.ops != null && component1.ops.length > int3 && component1.ops[int3] != null) {
+											stringStack[ssp++] = component1.ops[int3];
 											continue;
 										}
 										stringStack[ssp++] = EMPTY_STRING;
 										continue;
 									}
 									if (opcode == Cs2Opcodes.getOptionBase2) {
-										if (component.optionBase == null) {
+										if (component1.optionBase == null) {
 											stringStack[ssp++] = EMPTY_STRING;
 										} else {
-											stringStack[ssp++] = component.optionBase;
+											stringStack[ssp++] = component1.optionBase;
 										}
 										continue;
 									}
@@ -3121,16 +3476,16 @@ public final class ScriptRunner {
 										int3 = intStack[isp + 1];
 										int1 = intStack[isp];
 										int2 = intStack[isp + 2];
-										local1063 = InterfaceList.getComponent(int2);
-										Cs1ScriptRunner.method1015(int3, int1, local1063);
+										component2 = InterfaceList.getComponent(int2);
+										Cs1ScriptRunner.method1015(int3, int1, component2);
 										continue;
 									}
 									if (opcode == 3109) {
 										isp -= 2;
 										int1 = intStack[isp];
-										local1256 = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+										component3 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 										int3 = intStack[isp + 1];
-										Cs1ScriptRunner.method1015(int3, int1, local1256);
+										Cs1ScriptRunner.method1015(int3, int1, component3);
 										continue;
 									}
 									if (opcode == 3110) {
@@ -4770,10 +5125,10 @@ public final class ScriptRunner {
 														int2 = intStack[isp + 2];
 														c = intStack[isp + 4];
 														@Pc(8108) int local8108 = intStack[isp + 6];
-														local1087 = intStack[isp + 5];
+														int4 = intStack[isp + 5];
 														if (int1 >= 0 && int1 < 2 && Camera.anIntArrayArrayArray9[int1] != null && int3 >= 0 && Camera.anIntArrayArrayArray9[int1].length > int3) {
 															Camera.anIntArrayArrayArray9[int1][int3] = new int[]{(int2 >> 14 & 0x3FFF) * 128, local652, (int2 & 0x3FFF) * 128, local8108};
-															Camera.anIntArrayArrayArray9[int1][int3 + 1] = new int[]{(c >> 14 & 0x3FFF) * 128, local1087, (c & 0x3FFF) * 128};
+															Camera.anIntArrayArrayArray9[int1][int3 + 1] = new int[]{(c >> 14 & 0x3FFF) * 128, int4, (c & 0x3FFF) * 128};
 														}
 														continue;
 													}
@@ -5689,8 +6044,8 @@ public final class ScriptRunner {
 										aCalendar2.setTime(new Date(local11770));
 										local652 = aCalendar2.get(Calendar.DATE);
 										c = aCalendar2.get(Calendar.MONTH);
-										local1087 = aCalendar2.get(Calendar.YEAR);
-										stringStack[ssp++] = JagString.concatenate(new JagString[]{JagString.parseInt(local652), aClass100_767, DateUtil.aClass100Array40[c], aClass100_767, JagString.parseInt(local1087)});
+										int4 = aCalendar2.get(Calendar.YEAR);
+										stringStack[ssp++] = JagString.concatenate(new JagString[]{JagString.parseInt(local652), aClass100_767, DateUtil.aClass100Array40[c], aClass100_767, JagString.parseInt(int4)});
 										continue;
 									}
 									if (opcode == Cs2Opcodes.strForGender) {
@@ -5866,16 +6221,16 @@ public final class ScriptRunner {
 							}
 						} else {
 							if (opcode < 2000) {
-								component = local1020 ? staticActiveComponent1 : staticActiveComponent2;
+								component1 = componentSlot1 ? staticActiveComponent1 : staticActiveComponent2;
 							} else {
 								isp--;
-								component = InterfaceList.getComponent(intStack[isp]);
+								component1 = InterfaceList.getComponent(intStack[isp]);
 								opcode -= 1000;
 							}
 							if (opcode == Cs2Opcodes.setPosition) {
 								isp -= 4;
-								component.baseX = intStack[isp];
-								component.baseY = intStack[isp + 1];
+								component1.baseX = intStack[isp];
+								component1.baseY = intStack[isp + 1];
 								int2 = intStack[isp + 3];
 								if (int2 < 0) {
 									int2 = 0;
@@ -5888,21 +6243,21 @@ public final class ScriptRunner {
 								} else if (int3 > 5) {
 									int3 = 5;
 								}
-								component.xMode = (byte) int2;
-								component.yMode = (byte) int3;
-								InterfaceList.redraw(component);
-								InterfaceList.update(component);
-								if (component.createdComponentId == -1) {
-									DelayedStateChange.method4675(component.id);
+								component1.xMode = (byte) int2;
+								component1.yMode = (byte) int3;
+								InterfaceList.redraw(component1);
+								InterfaceList.update(component1);
+								if (component1.createdComponentId == -1) {
+									DelayedStateChange.method4675(component1.id);
 								}
 								continue;
 							}
 							if (opcode == Cs2Opcodes.setSize) {
 								isp -= 4;
-								component.baseWidth = intStack[isp];
-								component.baseHeight = intStack[isp + 1];
-								component.anInt451 = 0;
-								component.anInt526 = 0;
+								component1.baseWidth = intStack[isp];
+								component1.baseHeight = intStack[isp + 1];
+								component1.anInt451 = 0;
+								component1.anInt526 = 0;
 								int3 = intStack[isp + 2];
 								int2 = intStack[isp + 3];
 								if (int2 < 0) {
@@ -5910,46 +6265,46 @@ public final class ScriptRunner {
 								} else if (int2 > 4) {
 									int2 = 4;
 								}
-								component.dynamicHeightValue = (byte) int2;
+								component1.dynamicHeightValue = (byte) int2;
 								if (int3 < 0) {
 									int3 = 0;
 								} else if (int3 > 4) {
 									int3 = 4;
 								}
-								component.dynamicWidthValue = (byte) int3;
-								InterfaceList.redraw(component);
-								InterfaceList.update(component);
-								if (component.type == 0) {
-									InterfaceList.method531(component, false);
+								component1.dynamicWidthValue = (byte) int3;
+								InterfaceList.redraw(component1);
+								InterfaceList.update(component1);
+								if (component1.type == 0) {
+									InterfaceList.method531(component1, false);
 								}
 								continue;
 							}
 							if (opcode == Cs2Opcodes.setHidden) {
 								isp--;
 								local1552 = intStack[isp] == 1;
-								if (local1552 != component.hidden) {
-									component.hidden = local1552;
-									InterfaceList.redraw(component);
+								if (local1552 != component1.hidden) {
+									component1.hidden = local1552;
+									InterfaceList.redraw(component1);
 								}
-								if (component.createdComponentId == -1) {
-									DelayedStateChange.method1906(component.id);
+								if (component1.createdComponentId == -1) {
+									DelayedStateChange.method1906(component1.id);
 								}
 								continue;
 							}
 							if (opcode == Cs2Opcodes.setAspect) {
 								isp -= 2;
-								component.aspectWidth = intStack[isp];
-								component.aspectHeight = intStack[isp + 1];
-								InterfaceList.redraw(component);
-								InterfaceList.update(component);
-								if (component.type == 0) {
-									InterfaceList.method531(component, false);
+								component1.aspectWidth = intStack[isp];
+								component1.aspectHeight = intStack[isp + 1];
+								InterfaceList.redraw(component1);
+								InterfaceList.update(component1);
+								if (component1.type == 0) {
+									InterfaceList.method531(component1, false);
 								}
 								continue;
 							}
 							if (opcode == Cs2Opcodes.setNoClickThrough) {
 								isp--;
-								component.noClickThrough = intStack[isp] == 1;
+								component1.noClickThrough = intStack[isp] == 1;
 								continue;
 							}
 						}

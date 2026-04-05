@@ -64,12 +64,12 @@ public class VarpDomain {
 	}
 
 	@OriginalMember(owner = "client!li", name = "a", descriptor = "(III)V")
-	public static void method2766(@OriginalArg(0) int arg0, @OriginalArg(2) int arg1) {
-		activeVarps[arg0] = arg1;
-		@Pc(21) LongNode local21 = (LongNode) aClass133_20.get(arg0);
+	public static void setActive(@OriginalArg(0) int id, @OriginalArg(2) int value) {
+		activeVarps[id] = value;
+		@Pc(21) LongNode local21 = (LongNode) aClass133_20.get(id);
 		if (local21 == null) {
 			local21 = new LongNode(MonotonicClock.currentTimeMillis() + 500L);
-			aClass133_20.put(local21, arg0);
+			aClass133_20.put(local21, id);
 		} else {
 			local21.value = MonotonicClock.currentTimeMillis() + 500L;
 		}
@@ -96,7 +96,7 @@ public class VarpDomain {
 			arg1 = 0;
 		}
 		local25 <<= local16;
-		method2766(local19, local25 & arg1 << local16 | activeVarps[local19] & ~local25);
+		setActive(local19, local25 & arg1 << local16 | activeVarps[local19] & ~local25);
 	}
 
 	@OriginalMember(owner = "client!wd", name = "a", descriptor = "(BII)V")

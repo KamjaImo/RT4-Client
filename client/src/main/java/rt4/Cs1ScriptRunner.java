@@ -428,7 +428,7 @@ public class Cs1ScriptRunner {
 								local563 = PlayerList.self.xFine + local556 >> 7;
 								local571 = PlayerList.self.zFine - objId >> 7;
 								if (MiniMenu.aBoolean302 && (MiniMenu.anInt4999 & 0x40) != 0) {
-									@Pc(583) Component local583 = InterfaceList.method1418(MiniMenu.anInt2512, MiniMenu.anInt506);
+									@Pc(583) Component local583 = InterfaceList.getComponent(MiniMenu.anInt2512, MiniMenu.anInt506);
 									if (local583 == null) {
 										MiniMenu.method1294();
 									} else {
@@ -436,7 +436,7 @@ public class Cs1ScriptRunner {
 									}
 									continue;
 								}
-								if (client.game == 1) {
+								if (client.debug == 1) {
 									MiniMenu.add(-1, 1L, JagString.EMPTY, local563, (short) 36, LocalizedText.FACEHERE, local571);
 								}
 								MiniMenu.add(-1, 1L, JagString.EMPTY, local563, (short) 60, MiniMenu.walkText, local571);
@@ -1290,7 +1290,7 @@ public class Cs1ScriptRunner {
 		@Pc(161) int local161 = arg0 + arg2 * anInt2882 / WorldMap.width;
 		@Pc(167) int local167 = arg2 * WorldMap.anInt2387 / WorldMap.width;
 		@Pc(169) int local169 = 16711680;
-		if (client.game == 1) {
+		if (client.debug == 1) {
 			local169 = 16777215;
 		}
 		if (GlRenderer.enabled) {

@@ -35,7 +35,7 @@ public class ClientProt {
 
 	@OriginalMember(owner = "client!vg", name = "a", descriptor = "(Lclient!na;IIBI)V")
 	public static void method4512(@OriginalArg(0) JagString arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(4) int arg3) {
-		@Pc(8) Component local8 = InterfaceList.method1418(arg3, arg1);
+		@Pc(8) Component local8 = InterfaceList.getComponent(arg3, arg1);
 		if (local8 == null) {
 			return;
 		}

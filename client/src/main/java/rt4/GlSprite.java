@@ -344,7 +344,7 @@ public class GlSprite extends Sprite {
 
 	@OriginalMember(owner = "client!cf", name = "a", descriptor = "(IIIIII)V")
 	@Override
-	protected final void method1416(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int arg4, @OriginalArg(5) int arg5) {
+	protected final void method1416(@OriginalArg(0) int arg0, @OriginalArg(1) int arg1, @OriginalArg(2) int arg2, @OriginalArg(3) int arg3, @OriginalArg(4) int angle, @OriginalArg(5) int arg5) {
 		GlRenderer.method4149();
 		@Pc(2) GL2 local2 = GlRenderer.gl;
 		GlRenderer.setTextureId(this.textureId);
@@ -352,7 +352,7 @@ public class GlSprite extends Sprite {
 		@Pc(15) int local15 = arg0 - (this.anInt1863 << 4);
 		@Pc(22) int local22 = arg1 - (this.anInt1861 << 4);
 		local2.glTranslatef((float) arg2 / 16.0F, (float) GlRenderer.canvasHeight - (float) arg3 / 16.0F, 0.0F);
-		local2.glRotatef((float) arg4 * 0.005493164F, 0.0F, 0.0F, 1.0F);
+		local2.glRotatef((float) angle * 0.005493164F, 0.0F, 0.0F, 1.0F);
 		if (arg5 != 4096) {
 			local2.glScalef((float) arg5 / 4096.0F, (float) arg5 / 4096.0F, 0.0F);
 		}
