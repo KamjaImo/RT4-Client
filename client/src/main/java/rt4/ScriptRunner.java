@@ -5191,13 +5191,13 @@ public final class ScriptRunner {
 														string = stringStack[ssp];
 														if (string.length() > 0) {
 															if (PlayerList.playerNames == null) {
-																PlayerList.playerNames = new JagString[PlayerList.anIntArray309[client.game]];
+																PlayerList.playerNames = new JagString[PlayerList.anIntArray309[client.debug]];
 															}
 															PlayerList.playerNames[int2] = string;
 														}
 														if (str1.length() > 0) {
 															if (PlayerList.playerNames2 == null) {
-																PlayerList.playerNames2 = new JagString[PlayerList.anIntArray309[client.game]];
+																PlayerList.playerNames2 = new JagString[PlayerList.anIntArray309[client.debug]];
 															}
 															PlayerList.playerNames2[int2] = str1;
 														}

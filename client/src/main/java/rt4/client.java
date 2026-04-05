@@ -38,6 +38,18 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!fk", name = "q", descriptor = "Lclient!uc;")
 	public static MouseWheel mouseWheel;
 
+	// STRING CONSTANTS
+	// During early initialization, the game client does not have access to text resources within the cache files,
+	// and is instead forced to hard-code specific strings into the client.
+	// Below are the constants used for this purpose.
+	// Note that some strings have special encodings - see JagString for notes on these.
+	@OriginalMember(owner = "client!jm", name = "A", descriptor = "Lclient!na;")
+	static final JagString EMPTY_STRING = JagString.parse("");
+	@OriginalMember(owner = "client!si", name = "gb", descriptor = "Lclient!na;")
+	public static final JagString LINE_BREAK = JagString.parse("<br>(X");
+	@OriginalMember(owner = "client!qk", name = "a", descriptor = "Lclient!na;")
+	public static final JagString aClass100_899 = JagString.parse("0(U");
+
 	// LOADING PROCESS
 	// The game client loads in a series of numbered stages that run sequentially
 	// until the game is fully loaded and asynchronous processing is fully online.
@@ -163,18 +175,6 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!id", name = "l", descriptor = "Lclient!jb;")
 	public static Js5NetQueue js5NetQueue;
 
-	// STRING CONSTANTS
-	// During early initialization, the game client does not have access to text resources within the cache files,
-	// and is instead forced to hard-code specific strings into the client.
-	// Below are the constants used for this purpose.
-	// Note that some strings have special encodings - see JagString for notes on these.
-	@OriginalMember(owner = "client!jm", name = "A", descriptor = "Lclient!na;")
-	static final JagString EMPTY_STRING = JagString.parse("");
-	@OriginalMember(owner = "client!si", name = "gb", descriptor = "Lclient!na;")
-	public static final JagString LINE_BREAK = JagString.parse("<br>(X");
-	@OriginalMember(owner = "client!qk", name = "a", descriptor = "Lclient!na;")
-	public static final JagString aClass100_899 = JagString.parse("0(U");
-
 	// DISCONTINUED BEHAVIOR
 
 	// APPLET PARAMETERS
@@ -203,7 +203,6 @@ public final class client extends GameShell {
 	@OriginalMember(owner = "client!sg", name = "e", descriptor = "Lclient!na;")
 	public static final JagString SETTINGS = JagString.parse("settings");
 	public static JagString settings = null;
-	@OriginalMember(owner = "client!rh", name = "j", descriptor = "Lclient!client;")
 
 	// The haveie6 parameter would have indicated whether IE6 is installed on the user's computer.
 	// Presumably this would be used when opening browser links in-game.
