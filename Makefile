@@ -11,7 +11,8 @@ CLIENT=client/build/client.jar
 PLUGINS=$(shell find plugin-playground/src -type d)
 
 MANIFEST=manifest.mf
-CLASSPATH=.:$(shell echo $(LIBS) | tr ' ' ':'):$(DEOB):$(SIGNLINK):$(CLIENT)
+EARLY_CLASSPATH=.:$(shell echo $(LIBS) | tr ' ' ':'):$(DEOB):$(SIGNLINK)
+CLASSPATH=.$(EARLY_CLASSPATH):$(CLIENT)
 
 all: client plugins
 
@@ -44,7 +45,7 @@ $(SIGNLINK): $(LIBS) $(DEOB) $(SIGNLINK_SOURCES)
 	javac \
 		-Xlint:none \
 		-sourcepath signlink/src \
-		-classpath $(CLASSPATH) \
+		-classpath $(EARLY_CLASSPATH) \
 		-d signlink/build/classes \
 		$(SIGNLINK_SOURCES)
 	jar cf $(SIGNLINK) -C signlink/build/classes .
