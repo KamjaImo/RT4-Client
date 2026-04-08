@@ -10,6 +10,7 @@ SIGNLINK=signlink/build/signlink.jar
 CLIENT=client/build/client.jar
 PLUGINS=$(shell find plugin-playground/src -type d)
 
+CLIENT_CONFIG=client/config.json
 MANIFEST=manifest.mf
 EARLY_CLASSPATH=.:$(shell echo $(LIBS) | tr ' ' ':'):$(DEOB):$(SIGNLINK)
 CLASSPATH=.$(EARLY_CLASSPATH):$(CLIENT)
@@ -50,13 +51,14 @@ $(SIGNLINK): $(LIBS) $(DEOB) $(SIGNLINK_SOURCES)
 		$(SIGNLINK_SOURCES)
 	jar cf $(SIGNLINK) -C signlink/build/classes .
 
-$(CLIENT): $(LIBS) $(DEOB) $(SIGNLINK) $(CLIENT_SOURCES)
+$(CLIENT): $(LIBS) $(DEOB) $(SIGNLINK) $(CLIENT_SOURCES) $(CLIENT_CONFIG)
 	javac \
 		-Xlint:none \
 		-sourcepath client/src \
 		-classpath $(CLASSPATH) \
 		-d client/build/classes \
 		$(CLIENT_SOURCES)
+	cp $(CLIENT_CONFIG) client/build/classes/config.json
 	jar cfm $(CLIENT) $(MANIFEST) -C client/build/classes .
 
 .PHONY: all clean client plugins
