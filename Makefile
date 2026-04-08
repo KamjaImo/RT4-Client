@@ -51,7 +51,7 @@ $(SIGNLINK): $(LIBS) $(DEOB) $(SIGNLINK_SOURCES)
 		$(SIGNLINK_SOURCES)
 	jar cf $(SIGNLINK) -C signlink/build/classes .
 
-$(CLIENT): $(LIBS) $(DEOB) $(SIGNLINK) $(CLIENT_SOURCES) $(CLIENT_CONFIG)
+$(CLIENT): $(LIBS) $(DEOB) $(SIGNLINK) $(CLIENT_SOURCES) $(MANIFEST) $(CLIENT_CONFIG)
 	javac \
 		-Xlint:none \
 		-sourcepath client/src \
